@@ -1,7 +1,5 @@
 """Тесты асинхронного клиента Deribit на базе aiohttp."""
 
-from __future__ import annotations
-
 from decimal import Decimal
 from typing import Any
 
@@ -30,23 +28,18 @@ class FakeResponse:
         self.status = status
         self.headers = headers or {}
 
-    async def __aenter__(self) -> FakeResponse:
+    async def __aenter__(self):
         return self
 
-    async def __aexit__(self, *exc_info: object) -> bool:
+    async def __aexit__(self, *exc_info: object):
         return False
 
-    async def json(self) -> dict[str, Any]:
+    async def json(self):
         return self._payload
 
 
 class FakeSession:
-    """Записывает запросы и возвращает заранее заданную последовательность ответов.
-
-    Если задан один ответ, он переиспользуется; при нескольких ответах они
-    выдаются по порядку, что позволяет моделировать повторы. Исключение в
-    очереди поднимается при вызове ``get``.
-    """
+    """Записывает запросы и возвращает заранее заданную последовательность ответов."""
 
     def __init__(self, *responses: FakeResponse | Exception) -> None:
         self._responses = list(responses)

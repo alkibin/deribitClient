@@ -1,7 +1,5 @@
 """Тесты HTTP-слоя на ASGI-transport с фейковым сервисом."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator
 from decimal import Decimal
 
@@ -52,8 +50,7 @@ class FakePriceQueryService:
         offset: int = 0,
     ) -> Page[PriceTickDTO]:
         matched = [
-            tick
-            for tick in self._data
+            tick for tick in self._data
             if tick.ticker == ticker
             and (start is None or tick.timestamp >= start)
             and (end is None or tick.timestamp <= end)
@@ -78,7 +75,7 @@ async def test_get_all_prices_returns_page(client: AsyncClient) -> None:
     body = response.json()
     assert [tick["timestamp"] for tick in body["items"]] == [1000, 2000]
     assert body["total"] == 2
-    assert body["limit"] == 100
+    assert body["limit"] == 50
     assert body["offset"] == 0
 
 

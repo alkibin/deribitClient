@@ -1,7 +1,5 @@
 """Тесты слоя репозитория (in-memory SQLite)."""
 
-from __future__ import annotations
-
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker

@@ -1,7 +1,5 @@
 """Тесты сервиса загрузки цен на основе in-memory фейков."""
 
-from __future__ import annotations
-
 from decimal import Decimal
 
 from src.application.price_ingestion import PriceIngestionService

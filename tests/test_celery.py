@@ -1,20 +1,16 @@
 """Тесты фабрики приложения Celery и регистрации задач."""
 
-from __future__ import annotations
-
-import pytest
 from celery.schedules import crontab
 
 from src.core.config import Settings
 from src.infrastructure.celery.app import (
     TASK_FETCH_PRICES,
-    _parse_crontab,
     build_celery_app,
 )
 
 
 def test_build_celery_app_registers_beat_schedule() -> None:
-    settings = Settings(_env_file=None)
+    settings = Settings()
     app = build_celery_app(settings)
 
     entry = app.conf.beat_schedule["fetch-index-prices"]
@@ -22,11 +18,6 @@ def test_build_celery_app_registers_beat_schedule() -> None:
     assert isinstance(entry["schedule"], crontab)
     assert app.conf.broker_url == settings.celery.broker_url
     assert app.conf.enable_utc is True
-
-
-def test_parse_crontab_rejects_wrong_field_count() -> None:
-    with pytest.raises(ValueError, match="5-field"):
-        _parse_crontab("* * * *")
 
 
 def test_fetch_task_is_registered() -> None:

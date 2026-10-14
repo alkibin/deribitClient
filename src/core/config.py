@@ -1,7 +1,6 @@
 """Типизированная конфигурация приложения, загружаемая из переменных окружения."""
 
 from functools import lru_cache
-from typing import Annotated
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -14,17 +13,7 @@ class DeribitSettings(BaseSettings):
     timeout: float = 10.0
     max_retries: int = 3
 
-    tickers: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["btc_usd", "eth_usd"])
-
-    @field_validator("tickers", mode="before")
-    @classmethod
-    def _parse_tickers(cls, value: object) -> object:
-        """Разобрать тикеры из строки через запятую и убрать дубликаты (порядок сохраняем)."""
-        if isinstance(value, str):
-            return list(
-                dict.fromkeys(ticker.strip() for ticker in value.split(",") if ticker.strip())
-            )
-        return value
+    tickers: list[str] = Field(default_factory=lambda: ["btc_usd", "eth_usd"])
 
 
 class PostgresSettings(BaseSettings):

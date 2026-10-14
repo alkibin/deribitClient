@@ -1,7 +1,5 @@
 """Тесты сервиса чтения цен на основе in-memory фейков."""
 
-from __future__ import annotations
-
 from decimal import Decimal
 
 from src.application.price_query import PriceQueryService
@@ -90,7 +88,6 @@ async def test_get_latest_price_returns_none_when_empty() -> None:
 
 
 async def test_get_prices_between_does_not_validate_range() -> None:
-    # Текущая реализация сервиса не проверяет порядок границ (см. отчёт по багам).
     service = PriceQueryService(repository=FakeRepository())
     page = await service.get_prices_between("btc_usd", start=10, end=5)
     assert page.items == []
