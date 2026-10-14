@@ -1,12 +1,9 @@
 """Фабрика приложения FastAPI."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-
 from src.core.config import Settings, get_settings
 from src.infrastructure.db.session import create_engine, create_session_factory
 from src.interfaces.api.exceptions import register_exception_handlers

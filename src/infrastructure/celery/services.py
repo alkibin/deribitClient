@@ -11,6 +11,7 @@ async def fetch_and_store_prices(settings: Settings, tickers: list[str]) -> list
     """Загрузить текущие индексные цены и сохранить их в одной транзакции."""
     engine = create_engine(settings.postgres.dsn)
     session_factory = create_session_factory(engine)
+
     try:
         async with aiohttp.ClientSession() as http_session:
             provider = DeribitClient(

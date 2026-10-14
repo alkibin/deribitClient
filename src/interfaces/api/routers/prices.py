@@ -3,30 +3,23 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-
 from src.application.dto import PriceTickDTO
 from src.application.price_query import PriceQueryService
+from src.interfaces.api import schemas
 from src.interfaces.api.di import get_query_service
 from src.interfaces.api.exceptions import NotFoundError
-from src.interfaces.api.schemas import (
-    PriceFilterQuery,
-    PriceLatestQuery,
-    PriceListQuery,
-    PricePageSchema,
-    PriceTickSchema,
-)
 
 router = APIRouter(prefix="/api/v1/prices", tags=["prices"])
 
 
-@router.get("", response_model=PricePageSchema)
+@router.get("", response_model=schemas.PricePageSchema)
 async def get_all_prices(
-    query: Annotated[PriceListQuery, Query()],
+    query: Annotated[schemas.PriceListQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
-) -> PricePageSchema:
+) -> schemas.PricePageSchema:
     """Вернуть страницу сохранённых цен для запрошенного тикера."""
     page = await service.get_all_prices(query.ticker, limit=query.limit, offset=query.offset)
-    return PricePageSchema(
+    return schemas.PricePageSchema(
         items=page.items,
         total=page.total,
         limit=page.limit,
@@ -34,9 +27,9 @@ async def get_all_prices(
     )
 
 
-@router.get("/latest", response_model=PriceTickSchema)
+@router.get("/latest", response_model=schemas.PriceTickSchema)
 async def get_latest_price(
-    query: Annotated[PriceLatestQuery, Query()],
+    query: Annotated[schemas.PriceLatestQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
 ) -> PriceTickDTO:
     """Вернуть самую свежую цену для запрошенного тикера."""
@@ -46,11 +39,11 @@ async def get_latest_price(
     return latest
 
 
-@router.get("/filter", response_model=PricePageSchema)
+@router.get("/filter", response_model=schemas.PricePageSchema)
 async def get_prices_by_date(
-    query: Annotated[PriceFilterQuery, Query()],
+    query: Annotated[schemas.PriceFilterQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
-) -> PricePageSchema:
+) -> schemas.PricePageSchema:
     """Вернуть страницу цен тикера, отфильтрованных по диапазону (включительно)."""
     page = await service.get_prices_between(
         query.ticker,
@@ -59,7 +52,7 @@ async def get_prices_by_date(
         limit=query.limit,
         offset=query.offset,
     )
-    return PricePageSchema(
+    return schemas.PricePageSchema(
         items=page.items,
         total=page.total,
         limit=page.limit,

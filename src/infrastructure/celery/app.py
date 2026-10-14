@@ -7,8 +7,6 @@ from src.core.config import Settings
 
 TASK_FETCH_PRICES = "src.fetch_index_prices"
 
-_CRONTAB_FIELD_COUNT = 5
-
 
 def _parse_crontab(expression: str) -> crontab:
     """Преобразовать 5-полевое cron-выражение в объект расписания Celery."""

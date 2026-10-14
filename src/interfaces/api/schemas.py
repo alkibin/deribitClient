@@ -1,7 +1,5 @@
 """Схемы запросов и ответов, публикуемые публичным API."""
 
-from __future__ import annotations
-
 from decimal import Decimal
 from typing import Self
 

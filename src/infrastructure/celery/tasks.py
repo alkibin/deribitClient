@@ -2,8 +2,8 @@
 
 import asyncio
 
-from src.infrastructure.celery.app import TASK_FETCH_PRICES, build_celery_app
 from src.core.config import get_settings
+from src.infrastructure.celery.app import TASK_FETCH_PRICES, build_celery_app
 from src.infrastructure.celery.services import fetch_and_store_prices
 
 celery_app = build_celery_app(get_settings())

@@ -1,9 +1,4 @@
-"""Исключения HTTP-слоя и централизованные обработчики ответов об ошибках.
-
-Роутеры поднимают наследников :class:`ApiError` вместо ``HTTPException``;
-:func:`register_exception_handlers` превращает их в единообразные JSON-ответы
-вида ``{"detail": ...}``.
-"""
+"""Исключения HTTP-слоя и централизованные обработчики ответов об ошибках."""
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

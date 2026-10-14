@@ -1,18 +1,9 @@
-"""Провайдеры зависимостей FastAPI.
-
-Все зависимости берут своих соавторов из ``app.state`` (заполняется в lifespan
-приложения), поэтому модульное изменяемое состояние не требуется. API нужен
-только доступ на чтение, поэтому он зависит от сервиса чтения и никогда — от
-клиента Deribit.
-"""
-
-from __future__ import annotations
+"""Провайдеры зависимостей FastAPI."""
 
 from collections.abc import AsyncIterator
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
 from src.application.price_query import PriceQueryService
 from src.infrastructure.db.repository import SqlAlchemyPriceRepository
 

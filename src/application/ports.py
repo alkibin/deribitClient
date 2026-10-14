@@ -1,9 +1,4 @@
-"""Исходящие порты (абстракции, от которых зависит слой application).
-
-Порты принадлежат слою application, а реализуются инфраструктурой, поэтому
-зависимости направлены внутрь. Это избавляет сервисы application от импорта из
-:mod:`src.infrastructure`.
-"""
+"""Исходящие порты (абстракции, от которых зависит слой application)."""
 
 from decimal import Decimal
 from typing import Protocol
