@@ -2,47 +2,66 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 
 from src.application.dto import PriceTickDTO
 from src.application.price_query import PriceQueryService
 from src.interfaces.api.di import get_query_service
-from src.interfaces.api.schemas import PriceTickSchema, PriceFilterSchema
+from src.interfaces.api.exceptions import NotFoundError
+from src.interfaces.api.schemas import (
+    PriceFilterQuery,
+    PriceLatestQuery,
+    PriceListQuery,
+    PricePageSchema,
+    PriceTickSchema,
+)
 
 router = APIRouter(prefix="/api/v1/prices", tags=["prices"])
 
-TickerQuery = Query(..., min_length=1, description="Тикер, например 'btc_usd' или 'eth_usd'.")
 
-
-@router.get("", response_model=list[PriceTickSchema])
+@router.get("", response_model=PricePageSchema)
 async def get_all_prices(
-    ticker: str = TickerQuery,
+    query: Annotated[PriceListQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
-) -> list[PriceTickDTO]:
-    """Вернуть все сохранённые цены для запрошенного тикера."""
-    return await service.get_all_prices(ticker)
+) -> PricePageSchema:
+    """Вернуть страницу сохранённых цен для запрошенного тикера."""
+    page = await service.get_all_prices(query.ticker, limit=query.limit, offset=query.offset)
+    return PricePageSchema(
+        items=page.items,
+        total=page.total,
+        limit=page.limit,
+        offset=page.offset,
+    )
 
 
 @router.get("/latest", response_model=PriceTickSchema)
 async def get_latest_price(
-    ticker: str = TickerQuery,
+    query: Annotated[PriceLatestQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
 ) -> PriceTickDTO:
     """Вернуть самую свежую цену для запрошенного тикера."""
-    latest = await service.get_latest_price(ticker)
+    latest = await service.get_latest_price(query.ticker)
     if latest is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No data for ticker '{ticker}'",
-        )
+        raise NotFoundError(f"No data for ticker '{query.ticker}'")
     return latest
 
 
-@router.get("/filter", response_model=list[PriceTickSchema])
+@router.get("/filter", response_model=PricePageSchema)
 async def get_prices_by_date(
-    ticker: str = TickerQuery,
-    filters: PriceFilterSchema = Depends(),
+    query: Annotated[PriceFilterQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
-) -> list[PriceTickDTO]:
-    """Вернуть цены для запрошенного тикера, отфильтрованные по диапазону (включительно)."""
-    return await service.get_prices_between(ticker, start=filters.date_from, end=filters.date_to)
+) -> PricePageSchema:
+    """Вернуть страницу цен тикера, отфильтрованных по диапазону (включительно)."""
+    page = await service.get_prices_between(
+        query.ticker,
+        start=query.date_from,
+        end=query.date_to,
+        limit=query.limit,
+        offset=query.offset,
+    )
+    return PricePageSchema(
+        items=page.items,
+        total=page.total,
+        limit=page.limit,
+        offset=page.offset,
+    )

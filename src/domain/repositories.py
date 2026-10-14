@@ -13,8 +13,18 @@ class PriceRepository(ABC):
         """Сохранить батч ценовых тиков в одной транзакции."""
 
     @abstractmethod
-    async def get_all(self, ticker: str) -> list[PriceTick]:
-        """Вернуть все сохранённые тики для тикера."""
+    async def get_all(
+        self,
+        ticker: str,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[PriceTick]:
+        """Вернуть тики для тикера, начиная с ``offset`` и не более ``limit`` записей."""
+
+    @abstractmethod
+    async def count(self, ticker: str) -> int:
+        """Вернуть общее число сохранённых тиков для тикера."""
 
     @abstractmethod
     async def get_latest(self, ticker: str) -> PriceTick | None:
@@ -24,7 +34,20 @@ class PriceRepository(ABC):
     async def get_between(
         self,
         ticker: str,
+        *,
         start: int | None = None,
         end: int | None = None,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[PriceTick]:
-        """Вернуть тики для тикера в заданном временном диапазоне."""
+        """Вернуть тики для тикера в диапазоне ``start``/``end`` с пагинацией."""
+
+    @abstractmethod
+    async def count_between(
+        self,
+        ticker: str,
+        *,
+        start: int | None = None,
+        end: int | None = None,
+    ) -> int:
+        """Вернуть число тиков для тикера в заданном временном диапазоне."""

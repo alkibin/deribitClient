@@ -11,3 +11,13 @@ class PriceTickDTO:
     ticker: str
     price: Decimal
     timestamp: int
+
+
+@dataclass(frozen=True, slots=True)
+class Page[T]:
+    """Страница результатов постраничной выборки."""
+
+    items: list[T]
+    total: int
+    limit: int
+    offset: int

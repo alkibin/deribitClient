@@ -1,6 +1,6 @@
 """Реализация контракта репозитория цен на SQLAlchemy."""
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities import PriceTick
@@ -19,14 +19,29 @@ class SqlAlchemyPriceRepository(PriceRepository):
         self.session.add_all(models)
         await self.session.flush()
 
-    async def get_all(self, ticker: str) -> list[PriceTick]:
+    async def get_all(
+        self,
+        ticker: str,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[PriceTick]:
         stmt = (
             select(PriceTickModel)
             .where(PriceTickModel.ticker == ticker)
             .order_by(PriceTickModel.timestamp.asc())
+            .offset(offset)
         )
-        rows = (await self.session.scalars(stmt))
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        rows = await self.session.scalars(stmt)
         return [self._to_entity(row) for row in rows]
+
+    async def count(self, ticker: str) -> int:
+        stmt = (
+            select(func.count()).select_from(PriceTickModel).where(PriceTickModel.ticker == ticker)
+        )
+        return await self.session.scalar(stmt) or 0
 
     async def get_latest(self, ticker: str) -> PriceTick | None:
         statement = (
@@ -41,18 +56,45 @@ class SqlAlchemyPriceRepository(PriceRepository):
     async def get_between(
         self,
         ticker: str,
+        *,
         start: int | None = None,
         end: int | None = None,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[PriceTick]:
-        statement = select(PriceTickModel).where(PriceTickModel.ticker == ticker)
-        if start is not None:
-            statement = statement.where(PriceTickModel.timestamp >= start)
-        if end is not None:
-            statement = statement.where(PriceTickModel.timestamp <= end)
-        statement = statement.order_by(PriceTickModel.timestamp.asc())
-
-        rows = (await self.session.scalars(statement))
+        stmt = (
+            select(PriceTickModel)
+            .where(*self._range_filters(ticker, start, end))
+            .order_by(PriceTickModel.timestamp.asc())
+            .offset(offset)
+        )
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        rows = await self.session.scalars(stmt)
         return [self._to_entity(row) for row in rows]
+
+    async def count_between(
+        self,
+        ticker: str,
+        *,
+        start: int | None = None,
+        end: int | None = None,
+    ) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(PriceTickModel)
+            .where(*self._range_filters(ticker, start, end))
+        )
+        return await self.session.scalar(stmt) or 0
+
+    @staticmethod
+    def _range_filters(ticker: str, start: int | None, end: int | None) -> list:
+        filters = [PriceTickModel.ticker == ticker]
+        if start is not None:
+            filters.append(PriceTickModel.timestamp >= start)
+        if end is not None:
+            filters.append(PriceTickModel.timestamp <= end)
+        return filters
 
     @staticmethod
     def _to_model(tick: PriceTick) -> PriceTickModel:
