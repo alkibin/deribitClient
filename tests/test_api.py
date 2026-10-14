@@ -10,10 +10,10 @@ from httpx import ASGITransport, AsyncClient
 
 from derbit_client.application.dto import PriceTickDTO
 from derbit_client.interfaces.api.app_factory import create_app
-from derbit_client.interfaces.api.deps import get_price_service
+from derbit_client.interfaces.api.deps import get_query_service
 
 
-class FakePriceService:
+class FakePriceQueryService:
     """Stub service returning canned DTOs for endpoint tests."""
 
     def __init__(self) -> None:
@@ -44,7 +44,7 @@ class FakePriceService:
 @pytest.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     app = create_app()
-    app.dependency_overrides[get_price_service] = lambda: FakePriceService()
+    app.dependency_overrides[get_query_service] = lambda: FakePriceQueryService()
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as http_client:
         yield http_client
