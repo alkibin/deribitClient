@@ -26,6 +26,4 @@ class PriceTickModel(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(28, 8), nullable=False)
     timestamp: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
-    __table_args__ = (
-        Index("ix_price_ticks_ticker_timestamp", "ticker", "timestamp"),
-    )
+    __table_args__ = (Index("ix_price_ticks_ticker_timestamp", "ticker", "timestamp"),)

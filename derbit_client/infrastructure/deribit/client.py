@@ -40,9 +40,7 @@ class DeribitClient:
         url = f"{self._base_url}{self._endpoint}"
         params = {"index_name": ticker}
 
-        async with self._session.get(
-            url, params=params, timeout=self._timeout
-        ) as response:
+        async with self._session.get(url, params=params, timeout=self._timeout) as response:
             response.raise_for_status()
             payload = await response.json()
 
