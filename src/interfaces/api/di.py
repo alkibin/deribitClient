@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from src.application.price_query import PriceQueryService
 from src.infrastructure.db.repository import SqlAlchemyPriceRepository
 

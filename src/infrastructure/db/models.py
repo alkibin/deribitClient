@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from sqlalchemy import Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.infrastructure.db.base import Base
 
 

@@ -1,7 +1,6 @@
 """Асинхронный клиент Deribit на базе aiohttp."""
 
 import asyncio
-from collections.abc import Awaitable, Callable
 from decimal import Decimal
 from typing import Any
 
@@ -14,11 +13,11 @@ from tenacity import (
 )
 
 from .exceptions import (
+    DeribitClientError,
     DeribitError,
     DeribitNotFoundError,
     DeribitRateLimitError,
     DeribitServerError,
-    DeribitClientError,
 )
 
 _RETRYABLE_ERRORS = (

@@ -3,7 +3,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from src.application.dto import PriceTickDTO, Page
+
+from src.application.dto import Page, PriceTickDTO
 from src.application.price_query import PriceQueryService
 from src.interfaces.api import schemas
 from src.interfaces.api.di import get_query_service
