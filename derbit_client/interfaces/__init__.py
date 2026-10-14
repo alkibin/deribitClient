@@ -1,1 +1,1 @@
-"""Interface layer: HTTP controllers, schemas and dependency wiring."""
+"""Слой interfaces: HTTP-контроллеры, схемы и связывание зависимостей."""

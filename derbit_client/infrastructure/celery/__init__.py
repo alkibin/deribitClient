@@ -1,1 +1,1 @@
-"""Celery integration (application factory and periodic tasks)."""
+"""Интеграция с Celery (фабрика приложения и периодические задачи)."""

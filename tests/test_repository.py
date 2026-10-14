@@ -1,4 +1,4 @@
-"""Tests for the repository layer (SQLite in-memory)."""
+"""Тесты слоя репозитория (in-memory SQLite)."""
 
 from __future__ import annotations
 

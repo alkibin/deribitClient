@@ -1,1 +1,1 @@
-"""Infrastructure layer: adapters to external systems (DB, Deribit, Celery)."""
+"""Слой infrastructure: адаптеры к внешним системам (БД, Deribit, Celery)."""

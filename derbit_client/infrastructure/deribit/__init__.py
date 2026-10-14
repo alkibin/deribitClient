@@ -1,1 +1,1 @@
-"""Deribit REST API adapter."""
+"""Адаптер REST API Deribit."""

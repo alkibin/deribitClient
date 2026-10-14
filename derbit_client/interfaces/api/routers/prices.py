@@ -1,6 +1,6 @@
-"""Read-only HTTP endpoints exposing stored index prices.
+"""HTTP-эндпоинты только для чтения, отдающие сохранённые индексные цены.
 
-Every route is a ``GET`` and requires the ``ticker`` query parameter.
+Каждый маршрут — ``GET`` и требует query-параметр ``ticker``.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -12,7 +12,7 @@ from derbit_client.interfaces.api.schemas import PriceTickSchema
 
 router = APIRouter(prefix="/api/v1/prices", tags=["prices"])
 
-TickerQuery = Query(..., min_length=1, description="Ticker, e.g. 'btc_usd' or 'eth_usd'.")
+TickerQuery = Query(..., min_length=1, description="Тикер, например 'btc_usd' или 'eth_usd'.")
 
 
 @router.get("", response_model=list[PriceTickSchema])
@@ -20,7 +20,7 @@ async def get_all_prices(
     ticker: str = TickerQuery,
     service: PriceQueryService = Depends(get_query_service),
 ) -> list[PriceTickDTO]:
-    """Return every stored price for the requested ticker."""
+    """Вернуть все сохранённые цены для запрошенного тикера."""
     return await service.get_all_prices(ticker)
 
 
@@ -29,7 +29,7 @@ async def get_latest_price(
     ticker: str = TickerQuery,
     service: PriceQueryService = Depends(get_query_service),
 ) -> PriceTickDTO:
-    """Return the most recent price for the requested ticker."""
+    """Вернуть самую свежую цену для запрошенного тикера."""
     latest = await service.get_latest_price(ticker)
     if latest is None:
         raise HTTPException(
@@ -46,17 +46,17 @@ async def get_prices_by_date(
         default=None,
         alias="from",
         ge=0,
-        description="Inclusive lower bound as a UNIX timestamp (seconds).",
+        description="Включительная нижняя граница в виде UNIX timestamp (секунды).",
     ),
     date_to: int | None = Query(
         default=None,
         alias="to",
         ge=0,
-        description="Inclusive upper bound as a UNIX timestamp (seconds).",
+        description="Включительная верхняя граница в виде UNIX timestamp (секунды).",
     ),
     service: PriceQueryService = Depends(get_query_service),
 ) -> list[PriceTickDTO]:
-    """Return prices for the requested ticker filtered by an inclusive date range."""
+    """Вернуть цены для запрошенного тикера, отфильтрованные по диапазону (включительно)."""
     try:
         return await service.get_prices_between(ticker, start=date_from, end=date_to)
     except ValueError as error:

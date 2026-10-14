@@ -1,7 +1,7 @@
-"""Celery application factory.
+"""Фабрика приложения Celery.
 
-The Celery application is built from :class:`Settings` and configured with a
-periodic schedule that triggers the price fetcher. Task functions live in
+Приложение Celery собирается из :class:`Settings` и настраивается расписанием,
+которое запускает сборщик цен. Функции задач живут в
 :mod:`derbit_client.infrastructure.celery.tasks`.
 """
 
@@ -16,7 +16,7 @@ TASK_FETCH_PRICES = "derbit_client.fetch_index_prices"
 
 
 def _parse_crontab(expression: str) -> crontab:
-    """Parse a 5-field cron expression (minute hour day month weekday)."""
+    """Разобрать 5-полевое cron-выражение (минута час день месяц день_недели)."""
     parts = expression.split()
     if len(parts) != 5:
         raise ValueError(f"Expected a 5-field cron expression, got: {expression!r}")
@@ -31,7 +31,7 @@ def _parse_crontab(expression: str) -> crontab:
 
 
 def build_celery_app(settings: Settings) -> Celery:
-    """Create and configure a Celery application instance."""
+    """Создать и настроить экземпляр приложения Celery."""
     app = Celery("derbit_client")
     app.conf.update(
         broker_url=settings.celery.broker_url,

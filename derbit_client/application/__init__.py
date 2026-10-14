@@ -1,1 +1,1 @@
-"""Application layer: use cases orchestrating the domain."""
+"""Слой application: сценарии использования, управляющие доменом."""

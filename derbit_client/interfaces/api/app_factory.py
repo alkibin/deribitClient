@@ -1,9 +1,9 @@
-"""FastAPI application factory.
+"""Фабрика приложения FastAPI.
 
-The factory wires concrete infrastructure adapters (the database engine) into
-the application. Collaborators are stored on ``app.state`` and released by the
-lifespan context, keeping the module free of mutable globals. The HTTP app is
-read-only and does not need any third-party API client.
+Фабрика связывает конкретные инфраструктурные адаптеры (движок базы) с
+приложением. Соавторы сохраняются в ``app.state`` и освобождаются в lifespan, что
+избавляет модуль от изменяемых глобальных переменных. HTTP-приложение работает
+только на чтение и не нуждается в клиенте стороннего API.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from derbit_client.interfaces.api.routers import prices
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Create and dispose infrastructure resources for the app lifetime."""
+    """Создать и освободить инфраструктурные ресурсы на время жизни приложения."""
     settings: Settings = app.state.settings
     engine = create_engine(settings.postgres.dsn())
     app.state.engine = engine
@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    """Build a configured FastAPI application."""
+    """Собрать настроенное приложение FastAPI."""
     app = FastAPI(
         title="Deribit Index Price API",
         version="0.1.0",

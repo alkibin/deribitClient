@@ -1,4 +1,4 @@
-"""create price_ticks table
+"""создание таблицы price_ticks
 
 Revision ID: 0001_initial
 Revises:

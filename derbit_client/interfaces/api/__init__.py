@@ -1,1 +1,1 @@
-"""HTTP delivery mechanism (FastAPI)."""
+"""HTTP-механизм доставки (FastAPI)."""

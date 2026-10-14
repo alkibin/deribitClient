@@ -1,4 +1,4 @@
-"""Tests for the HTTP layer using an ASGI transport and a fake service."""
+"""Тесты HTTP-слоя на ASGI-transport с фейковым сервисом."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from derbit_client.interfaces.api.deps import get_query_service
 
 
 class FakePriceQueryService:
-    """Stub service returning canned DTOs for endpoint tests."""
+    """Заглушка сервиса, возвращающая заранее заданные DTO для тестов эндпоинтов."""
 
     def __init__(self) -> None:
         self._data = [

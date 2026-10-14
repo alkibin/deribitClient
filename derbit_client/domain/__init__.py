@@ -1,1 +1,1 @@
-"""Domain layer: pure business entities and repository contracts."""
+"""Слой domain: чистые бизнес-сущности и контракты репозиториев."""

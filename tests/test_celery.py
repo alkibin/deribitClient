@@ -1,4 +1,4 @@
-"""Tests for the Celery application factory and task registration."""
+"""Тесты фабрики приложения Celery и регистрации задач."""
 
 from __future__ import annotations
 

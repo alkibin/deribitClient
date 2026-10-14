@@ -1,1 +1,1 @@
-"""Database adapters (SQLAlchemy / asyncpg)."""
+"""Адаптеры базы данных (SQLAlchemy / asyncpg)."""

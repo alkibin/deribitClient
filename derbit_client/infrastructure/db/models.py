@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models."""
+"""ORM-модели SQLAlchemy."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from derbit_client.infrastructure.db.base import Base
 
 
 class PriceTickModel(Base):
-    """Stored index price observation."""
+    """Сохранённое наблюдение индексной цены."""
 
     __tablename__ = "price_ticks"
 

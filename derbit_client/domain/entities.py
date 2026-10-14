@@ -1,4 +1,4 @@
-"""Domain entity describing a single price observation."""
+"""Доменная сущность, описывающая одно наблюдение цены."""
 
 from dataclasses import dataclass
 from decimal import Decimal

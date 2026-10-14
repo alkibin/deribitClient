@@ -1,4 +1,4 @@
-"""Async engine and session factory helpers."""
+"""Хелперы для асинхронного движка и фабрики сессий."""
 
 from __future__ import annotations
 
@@ -14,12 +14,12 @@ from sqlalchemy.ext.asyncio import (
 
 
 def create_engine(dsn: str, echo: bool = False) -> AsyncEngine:
-    """Create an async SQLAlchemy engine for the given DSN."""
+    """Создать асинхронный движок SQLAlchemy для указанного DSN."""
     return create_async_engine(dsn, echo=echo, pool_pre_ping=True, future=True)
 
 
 def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
-    """Create a session factory bound to ``engine``."""
+    """Создать фабрику сессий, привязанную к ``engine``."""
     return async_sessionmaker(engine, expire_on_commit=False)
 
 
@@ -27,7 +27,7 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 async def session_scope(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> AsyncIterator[AsyncSession]:
-    """Provide a transactional session scope (commit on success, rollback on error)."""
+    """Открыть транзакционную область сессии (commit при успехе, rollback при ошибке)."""
     session = session_factory()
     try:
         yield session

@@ -1,4 +1,4 @@
-"""Response schemas exposed by the public API."""
+"""Схемы ответов, публикуемые публичным API."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class PriceTickSchema(BaseModel):
-    """Serialized price tick returned to API clients."""
+    """Сериализованный ценовой тик, возвращаемый клиентам API."""
 
     model_config = ConfigDict(from_attributes=True)
 

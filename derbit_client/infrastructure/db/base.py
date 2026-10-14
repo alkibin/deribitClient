@@ -1,4 +1,4 @@
-"""Declarative base shared by all ORM models."""
+"""Декларативная база, общая для всех ORM-моделей."""
 
 from __future__ import annotations
 
@@ -6,4 +6,4 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    """Base class for SQLAlchemy 2.0 declarative models."""
+    """Базовый класс декларативных моделей SQLAlchemy 2.0."""

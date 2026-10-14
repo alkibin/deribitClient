@@ -1,7 +1,7 @@
-"""Alembic environment (async).
+"""Окружение Alembic (асинхронное).
 
-The database URL is taken from application settings so migrations always target
-the same database as the runtime and no credentials are duplicated in config.
+URL базы берётся из настроек приложения, поэтому миграции всегда нацелены на ту
+же БД, что и рантайм, а учётные данные не дублируются в конфигурации.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode (emit SQL without a DB connection)."""
+    """Запустить миграции в offline-режиме (вывод SQL без подключения к БД)."""
     context.configure(
         url=config.get_main_option("sqlalchemy.url"),
         target_metadata=target_metadata,
@@ -54,7 +54,7 @@ def _do_run_migrations(connection: Connection) -> None:
 
 
 async def run_migrations_online() -> None:
-    """Run migrations in 'online' mode using an async engine."""
+    """Запустить миграции в online-режиме с использованием асинхронного движка."""
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

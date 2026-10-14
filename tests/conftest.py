@@ -1,4 +1,4 @@
-"""Shared test fixtures."""
+"""Общие тестовые фикстуры."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from derbit_client.infrastructure.db.base import Base
 
 @pytest.fixture
 async def session_factory() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
-    """Provide an in-memory SQLite session factory with the schema created."""
+    """Отдать фабрику сессий на in-memory SQLite с созданной схемой."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)

@@ -1,7 +1,7 @@
-"""Wait until PostgreSQL accepts connections.
+"""Ожидание готовности PostgreSQL принимать соединения.
 
-Used as a container entrypoint helper so that migrations and workers do not
-race the database during startup.
+Используется как вспомогательный скрипт в entrypoint контейнера, чтобы миграции
+и воркеры не соревновались с базой во время запуска.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ DELAY_SECONDS = 2
 
 
 async def wait_for_database() -> None:
-    """Poll PostgreSQL until it is reachable or attempts are exhausted."""
+    """Опрашивать PostgreSQL до установления соединения или исчерпания попыток."""
     dsn = get_settings().postgres.dsn(driver="postgresql")
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:

@@ -1,19 +1,16 @@
-"""Outbound ports (abstractions the application depends on).
+"""Исходящие порты (абстракции, от которых зависит слой application).
 
-Ports are owned by the application layer and implemented by infrastructure, so
-dependencies point inwards. This keeps application services free of any import
-from :mod:`derbit_client.infrastructure`.
+Порты принадлежат слою application, а реализуются инфраструктурой, поэтому
+зависимости направлены внутрь. Это избавляет сервисы application от импорта из
+:mod:`derbit_client.infrastructure`.
 """
-
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Protocol
 
 
 class IndexPriceProvider(Protocol):
-    """Port describing how the application obtains an index price."""
+    """Порт, описывающий способ получения индексной цены приложением."""
 
     async def get_index_price(self, ticker: str) -> Decimal:
-        """Return the current index price for ``ticker`` (e.g. ``btc_usd``)."""
-        ...
+        """Вернуть текущую индексную цену для ``ticker`` (например, ``btc_usd``)."""
