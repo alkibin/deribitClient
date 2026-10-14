@@ -1,7 +1,5 @@
 """Хелперы для асинхронного движка и фабрики сессий."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -24,7 +22,7 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 
 
 @asynccontextmanager
-async def session_scope(
+async def session_pool(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> AsyncIterator[AsyncSession]:
     """Открыть транзакционную область сессии (commit при успехе, rollback при ошибке)."""

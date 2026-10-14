@@ -1,33 +1,31 @@
 """Реализация контракта репозитория цен на SQLAlchemy."""
 
-from __future__ import annotations
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from derbit_client.domain.entities import PriceTick
-from derbit_client.domain.repositories import PriceRepository
-from derbit_client.infrastructure.db.models import PriceTickModel
+from src.domain.entities import PriceTick
+from src.domain.repositories import PriceRepository
+from src.infrastructure.db.models import PriceTickModel
 
 
 class SqlAlchemyPriceRepository(PriceRepository):
     """Сохраняет и читает ценовые тики через асинхронную сессию SQLAlchemy."""
 
     def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+        self.session = session
 
     async def add_many(self, ticks: list[PriceTick]) -> None:
         models = [self._to_model(tick) for tick in ticks]
-        self._session.add_all(models)
-        await self._session.flush()
+        self.session.add_all(models)
+        await self.session.flush()
 
     async def get_all(self, ticker: str) -> list[PriceTick]:
-        statement = (
+        stmt = (
             select(PriceTickModel)
             .where(PriceTickModel.ticker == ticker)
             .order_by(PriceTickModel.timestamp.asc())
         )
-        rows = (await self._session.scalars(statement)).all()
+        rows = (await self.session.scalars(stmt))
         return [self._to_entity(row) for row in rows]
 
     async def get_latest(self, ticker: str) -> PriceTick | None:
@@ -37,7 +35,7 @@ class SqlAlchemyPriceRepository(PriceRepository):
             .order_by(PriceTickModel.timestamp.desc())
             .limit(1)
         )
-        row = await self._session.scalar(statement)
+        row = await self.session.scalar(statement)
         return self._to_entity(row) if row is not None else None
 
     async def get_between(
@@ -53,7 +51,7 @@ class SqlAlchemyPriceRepository(PriceRepository):
             statement = statement.where(PriceTickModel.timestamp <= end)
         statement = statement.order_by(PriceTickModel.timestamp.asc())
 
-        rows = (await self._session.scalars(statement)).all()
+        rows = (await self.session.scalars(statement))
         return [self._to_entity(row) for row in rows]
 
     @staticmethod

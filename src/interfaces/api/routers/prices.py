@@ -1,14 +1,13 @@
-"""HTTP-эндпоинты только для чтения, отдающие сохранённые индексные цены.
+"""HTTP-эндпоинты только для чтения, отдающие сохранённые индексные цены."""
 
-Каждый маршрут — ``GET`` и требует query-параметр ``ticker``.
-"""
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from derbit_client.application.dto import PriceTickDTO
-from derbit_client.application.price_query import PriceQueryService
-from derbit_client.interfaces.api.deps import get_query_service
-from derbit_client.interfaces.api.schemas import PriceTickSchema
+from src.application.dto import PriceTickDTO
+from src.application.price_query import PriceQueryService
+from src.interfaces.api.di import get_query_service
+from src.interfaces.api.schemas import PriceTickSchema, PriceFilterSchema
 
 router = APIRouter(prefix="/api/v1/prices", tags=["prices"])
 
@@ -42,25 +41,8 @@ async def get_latest_price(
 @router.get("/filter", response_model=list[PriceTickSchema])
 async def get_prices_by_date(
     ticker: str = TickerQuery,
-    date_from: int | None = Query(
-        default=None,
-        alias="from",
-        ge=0,
-        description="Включительная нижняя граница в виде UNIX timestamp (секунды).",
-    ),
-    date_to: int | None = Query(
-        default=None,
-        alias="to",
-        ge=0,
-        description="Включительная верхняя граница в виде UNIX timestamp (секунды).",
-    ),
+    filters: PriceFilterSchema = Depends(),
     service: PriceQueryService = Depends(get_query_service),
 ) -> list[PriceTickDTO]:
     """Вернуть цены для запрошенного тикера, отфильтрованные по диапазону (включительно)."""
-    try:
-        return await service.get_prices_between(ticker, start=date_from, end=date_to)
-    except ValueError as error:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(error),
-        ) from error
+    return await service.get_prices_between(ticker, start=filters.date_from, end=filters.date_to)

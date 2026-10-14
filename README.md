@@ -142,14 +142,14 @@ docker compose down -v
 5. Запустите API:
 
    ```bash
-   uv run uvicorn derbit_client.interfaces.api.app_factory:create_app --factory --reload
+   uv run uvicorn src.interfaces.api.app_factory:create_app --factory --reload
    ```
 
 6. В отдельных терминалах запустите Celery worker и Beat:
 
    ```bash
-   uv run celery -A derbit_client.infrastructure.celery.tasks worker --loglevel=info
-   uv run celery -A derbit_client.infrastructure.celery.tasks beat --loglevel=info
+   uv run celery -A src.infrastructure.celery.tasks worker --loglevel=info
+   uv run celery -A src.infrastructure.celery.tasks beat --loglevel=info
    ```
 
 После этого раз в минуту будут сохраняться цены `btc_usd` и `eth_usd`.

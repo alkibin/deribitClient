@@ -13,9 +13,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from derbit_client.infrastructure.config import Settings, get_settings
-from derbit_client.infrastructure.db.session import create_engine, create_session_factory
-from derbit_client.interfaces.api.routers import prices
+from src.core.config import Settings, get_settings
+from src.infrastructure.db.session import create_engine, create_session_factory
+from src.interfaces.api.routers import prices
 
 
 @asynccontextmanager

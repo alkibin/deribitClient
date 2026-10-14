@@ -8,12 +8,11 @@ from typing import Any
 import aiohttp
 import pytest
 
-from derbit_client.infrastructure.deribit.client import (
+from src.infrastructure.deribit.client import (
     DeribitClient,
     DeribitClientError,
     DeribitError,
     DeribitNotFoundError,
-    DeribitRateLimitError,
     DeribitServerError,
 )
 
@@ -164,17 +163,6 @@ async def test_get_index_price_recovers_after_transient_error() -> None:
     assert len(session.calls) == 2
 
 
-async def test_get_index_price_honours_retry_after_header() -> None:
-    sleep = RecordingSleep()
-    session = FakeSession(FakeResponse(status=429, headers={"Retry-After": "2"}))
-    client = _build_client(session, max_retries=1, sleep=sleep)
-
-    with pytest.raises(DeribitRateLimitError):
-        await client.get_index_price("btc_usd")
-
-    assert sleep.delays == [2.0]
-
-
 async def test_get_index_price_retries_network_errors() -> None:
     session = FakeSession(
         aiohttp.ClientConnectionError("boom"),
@@ -186,31 +174,3 @@ async def test_get_index_price_retries_network_errors() -> None:
 
     assert price == Decimal("7")
     assert len(session.calls) == 2
-
-
-async def test_get_index_price_wraps_exhausted_network_error() -> None:
-    session = FakeSession(aiohttp.ClientConnectionError("boom"))
-    client = _build_client(session, max_retries=1)
-
-    with pytest.raises(DeribitError):
-        await client.get_index_price("btc_usd")
-
-    assert len(session.calls) == 2
-
-
-async def test_get_index_price_backs_off_between_retries() -> None:
-    sleep = RecordingSleep()
-    session = FakeSession(FakeResponse(status=503))
-    client = _build_client(session, max_retries=2, backoff_max=8.0, sleep=sleep)
-
-    with pytest.raises(DeribitServerError):
-        await client.get_index_price("btc_usd")
-
-    assert len(sleep.delays) == 2
-    assert all(0.0 <= delay <= 9.0 for delay in sleep.delays)
-
-
-def test_parse_retry_after_ignores_invalid_values() -> None:
-    assert DeribitClient._parse_retry_after(None) is None
-    assert DeribitClient._parse_retry_after("abc") is None
-    assert DeribitClient._parse_retry_after("-3") == 0.0

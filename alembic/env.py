@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.pool import NullPool
 
 from alembic import context
-from derbit_client.infrastructure.config import get_settings
+from derbit_client.core.config import get_settings
 
 # Import models so their tables are registered on Base.metadata.
 from derbit_client.infrastructure.db import models  # noqa: F401

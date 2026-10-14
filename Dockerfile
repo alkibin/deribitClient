@@ -14,7 +14,7 @@ RUN apt-get update \
 RUN pip install --no-cache-dir uv
 
 COPY pyproject.toml README.md ./
-COPY derbit_client ./derbit_client
+COPY src ./derbit_client
 
 RUN uv pip install --system .
 
@@ -26,4 +26,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 8000
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["uvicorn", "derbit_client.interfaces.api.app_factory:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.interfaces.api.app_factory:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

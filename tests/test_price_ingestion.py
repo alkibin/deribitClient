@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from derbit_client.application.price_ingestion import PriceIngestionService
-from derbit_client.domain.entities import PriceTick
-from derbit_client.domain.repositories import PriceRepository
+from src.application.price_ingestion import PriceIngestionService
+from src.domain.entities import PriceTick
+from src.domain.repositories import PriceRepository
 
 
 class FakeRepository(PriceRepository):

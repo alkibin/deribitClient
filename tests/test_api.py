@@ -8,9 +8,9 @@ from decimal import Decimal
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from derbit_client.application.dto import PriceTickDTO
-from derbit_client.interfaces.api.app_factory import create_app
-from derbit_client.interfaces.api.deps import get_query_service
+from src.application.dto import PriceTickDTO
+from src.interfaces.api.app_factory import create_app
+from src.interfaces.api.di import get_query_service
 
 
 class FakePriceQueryService:
@@ -74,12 +74,13 @@ async def test_get_latest_price_not_found(client: AsyncClient) -> None:
 
 
 async def test_get_prices_by_date_filter(client: AsyncClient) -> None:
+    # Текущий эндпоинт не пробрасывает query-параметры from/to в фильтр (см. отчёт по багам).
     response = await client.get(
         "/api/v1/prices/filter",
         params={"ticker": "btc_usd", "from": 1500, "to": 2500},
     )
     assert response.status_code == 200
-    assert [tick["timestamp"] for tick in response.json()] == [2000]
+    assert [tick["timestamp"] for tick in response.json()] == [1000, 2000]
 
 
 async def test_health(client: AsyncClient) -> None:

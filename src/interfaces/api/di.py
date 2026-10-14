@@ -13,14 +13,8 @@ from collections.abc import AsyncIterator
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from derbit_client.application.price_query import PriceQueryService
-from derbit_client.infrastructure.config import Settings
-from derbit_client.infrastructure.db.repository import SqlAlchemyPriceRepository
-
-
-def get_settings(request: Request) -> Settings:
-    """Вернуть экземпляр настроек, сохранённый в состоянии приложения."""
-    return request.app.state.settings
+from src.application.price_query import PriceQueryService
+from src.infrastructure.db.repository import SqlAlchemyPriceRepository
 
 
 def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:

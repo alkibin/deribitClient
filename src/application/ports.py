@@ -2,7 +2,7 @@
 
 Порты принадлежат слою application, а реализуются инфраструктурой, поэтому
 зависимости направлены внутрь. Это избавляет сервисы application от импорта из
-:mod:`derbit_client.infrastructure`.
+:mod:`src.infrastructure`.
 """
 
 from decimal import Decimal

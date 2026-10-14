@@ -6,8 +6,8 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from derbit_client.domain.entities import PriceTick
-from derbit_client.infrastructure.db.repository import SqlAlchemyPriceRepository
+from src.domain.entities import PriceTick
+from src.infrastructure.db.repository import SqlAlchemyPriceRepository
 
 
 async def test_add_many_and_get_all(session_factory: async_sessionmaker[AsyncSession]) -> None:

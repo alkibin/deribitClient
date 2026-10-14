@@ -41,6 +41,7 @@ packages = ["derbit_client"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-ra"
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100

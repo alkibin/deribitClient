@@ -1,13 +1,11 @@
 """Общие тестовые фикстуры."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from derbit_client.infrastructure.db.base import Base
+from src.infrastructure.db.base import Base
 
 
 @pytest.fixture
