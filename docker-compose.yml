@@ -7,6 +7,9 @@ x-app-environment: &app-environment
   CELERY__BROKER_URL: redis://redis:6379/0
   CELERY__RESULT_BACKEND: redis://redis:6379/1
   DERIBIT__TICKERS: btc_usd,eth_usd
+  DERIBIT__MAX_RETRIES: "3"
+  DERIBIT__BACKOFF_BASE: "0.5"
+  DERIBIT__BACKOFF_MAX: "8.0"
   CELERY__FETCH_CRON: "* * * * *"
 
 services:

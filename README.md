@@ -22,22 +22,21 @@
 Проект построен по принципам **Clean Architecture** с направлением зависимостей
 строго внутрь. Ответственности разделены по CQRS-подобному признаку: **запись**
 (сбор цен) выполняет воркер Celery, **чтение** (запросы клиентов) — FastAPI.
-
 ```
    read  ┌─────────────┐   write
    ──────► PriceQuery  │   ┌─────────────── PriceIngestion ──┐
          │  Service    │   │  Service                        │
          └──────┬──────┘   └───────┬───────────────┬─────────┘
                 │                  │               │
-          PriceReader         PriceWriter   IndexPriceProvider (port)
-                │                  │               ▲
+         PriceRepository ◄─────────┘       IndexPriceProvider (port)
+                │                                  ▲
                 └──── SqlAlchemyPriceRepository     │
                                     DeribitClient ───┘
         application ──► domain        infrastructure ─┘
 ```
 
-- **domain** — чистые сущности (`PriceTick`) и сегрегированные контракты
-  репозитория (`PriceReader`, `PriceWriter`). Не зависит ни от каких библиотек.
+- **domain** — чистые сущности (`PriceTick`) и контракт репозитория
+  (`PriceRepository`). Не зависит ни от каких библиотек.
 - **application** — сценарии и исходящие порты (`ports.IndexPriceProvider`):
   `PriceIngestionService` (fetch + store) и `PriceQueryService` (чтение).
   Зависит только от абстракций домена и собственных портов.
@@ -69,7 +68,7 @@ derbitClient/
 ├── derbit_client/
 │   ├── domain/                    # сущности и контракты репозитория
 │   │   ├── entities.py            # PriceTick
-│   │   └── repositories.py        # PriceReader + PriceWriter (ABC)
+│   │   └── repositories.py        # PriceRepository (ABC)
 │   ├── application/               # use cases и порты
 │   │   ├── dto.py                 # PriceTickDTO
 │   │   ├── ports.py               # IndexPriceProvider (Protocol)
@@ -210,6 +209,9 @@ uv run ruff check .
 | `DERIBIT__TICKERS`        | `btc_usd,eth_usd`                | Список тикеров                            |
 | `DERIBIT__BASE_URL`       | `https://www.deribit.com/api/v2` | Базовый URL Deribit API                   |
 | `DERIBIT__TIMEOUT`        | `10`                             | Таймаут HTTP-запросов, сек                |
+| `DERIBIT__MAX_RETRIES`    | `3`                              | Число повторов при временных сбоях        |
+| `DERIBIT__BACKOFF_BASE`   | `0.5`                            | Базовая задержка backoff, сек             |
+| `DERIBIT__BACKOFF_MAX`    | `8.0`                            | Максимальная задержка backoff, сек        |
 | `POSTGRES__HOST`          | `localhost`                      | Хост PostgreSQL                           |
 | `POSTGRES__PORT`          | `5432`                           | Порт PostgreSQL                           |
 | `POSTGRES__USER`          | `derbit`                         | Пользователь БД                           |
@@ -234,9 +236,14 @@ uv run ruff check .
   инфраструктурой (`DeribitClient`). Порт принадлежит слою, который его
   использует, поэтому `application` не импортирует `infrastructure` — вектор
   зависимостей указывает строго внутрь.
-- **Сегрегация репозитория: `PriceReader` / `PriceWriter`.** Ingestion зависит
-  только от write-контракта, query — только от read-контракта (ISP/CQS).
-  Оба реализует единый `SqlAlchemyPriceRepository`.
+- **Единый контракт репозитория `PriceRepository`.** Сбор и чтение цен работают
+  с одним шлюзом (`add_many` / `get_all` / `get_latest` / `get_between`), который
+  реализует `SqlAlchemyPriceRepository`. Разделение «чтение/запись» на уровне
+  сервисов сохранено, а искусственное расщепление интерфейса не вводится.
+- **Устойчивость HTTP-клиента к сбоям Deribit.** `DeribitClient` различает
+  постоянные ошибки (404 и прочие 4xx — без повторов) и временные (429, 5xx,
+  сетевые сбои). Временные повторяются с экспоненциальной задержкой и «полным
+  джиттером»; для 429 приоритет отдаётся заголовку `Retry-After`.
 - **Инъекция зависимостей через конструкторы и FastAPI `Depends`.** Никаких
   глобальных переменных: конфигурация и адаптеры создаются в фабрике приложения
   и живут в `app.state`, освобождаются в `lifespan`.

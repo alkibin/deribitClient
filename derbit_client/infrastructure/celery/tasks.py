@@ -1,9 +1,9 @@
-"""Periodic Celery tasks.
+"""Периодические задачи Celery.
 
-The single module-level ``celery_app`` object is a framework entrypoint needed
-by the Celery CLI (``celery -A derbit_client.infrastructure.celery.tasks``). It
-holds no application state: every dependency is constructed inside the task
-from :class:`Settings`.
+Единственный модульный объект ``celery_app`` — это точка входа, необходимая
+Celery CLI (``celery -A derbit_client.infrastructure.celery.tasks``). Он не
+хранит состояние приложения: все зависимости создаются внутри задачи из
+:class:`Settings`.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ celery_app = build_celery_app(get_settings())
 
 
 async def _fetch_and_store_prices(settings: Settings, tickers: list[str]) -> list[str]:
-    """Fetch current index prices and persist them within one transaction."""
+    """Загрузить текущие индексные цены и сохранить их в одной транзакции."""
     engine = create_engine(settings.postgres.dsn())
     session_factory = create_session_factory(engine)
     try:
@@ -36,10 +36,13 @@ async def _fetch_and_store_prices(settings: Settings, tickers: list[str]) -> lis
                 session=http_session,
                 base_url=settings.deribit.base_url,
                 timeout=settings.deribit.timeout,
+                max_retries=settings.deribit.max_retries,
+                backoff_base=settings.deribit.backoff_base,
+                backoff_max=settings.deribit.backoff_max,
             )
             async with session_scope(session_factory) as db_session:
                 service = PriceIngestionService(
-                    writer=SqlAlchemyPriceRepository(db_session),
+                    repository=SqlAlchemyPriceRepository(db_session),
                     provider=provider,
                 )
                 await service.fetch_and_store(tickers)
@@ -50,6 +53,6 @@ async def _fetch_and_store_prices(settings: Settings, tickers: list[str]) -> lis
 
 @celery_app.task(name=TASK_FETCH_PRICES)
 def fetch_index_prices() -> list[str]:
-    """Celery task: fetch and store index prices for all configured tickers."""
+    """Задача Celery: загрузить и сохранить индексные цены по всем настроенным тикерам."""
     settings = get_settings()
     return asyncio.run(_fetch_and_store_prices(settings, settings.deribit.tickers))
