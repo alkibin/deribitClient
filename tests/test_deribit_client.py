@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
 import pytest
@@ -15,68 +16,36 @@ from src.infrastructure.deribit.client import (
 )
 
 
-class FakeResponse:
-    """Минимальная замена ответа aiohttp в виде асинхронного контекстного менеджера."""
-
-    def __init__(
-        self,
-        payload: dict[str, Any] | None = None,
-        status: int = 200,
-        headers: dict[str, str] | None = None,
-    ) -> None:
-        self._payload = payload or {}
-        self.status = status
-        self.headers = headers or {}
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, *exc_info: object):
-        return False
-
-    async def json(self):
-        return self._payload
+def response(payload: dict[str, Any] | None = None, status: int = 200) -> MagicMock:
+    """Двойник ответа aiohttp: асинхронный контекстный менеджер с ``json()``."""
+    response = MagicMock(status=status)
+    response.json = AsyncMock(return_value=payload or {})
+    context = MagicMock()
+    context.__aenter__ = AsyncMock(return_value=response)
+    context.__aexit__ = AsyncMock(return_value=False)
+    return context
 
 
-class FakeSession:
-    """Записывает запросы и возвращает заранее заданную последовательность ответов."""
-
-    def __init__(self, *responses: FakeResponse | Exception) -> None:
-        self._responses = list(responses)
-        self.calls: list[tuple[str, dict[str, Any]]] = []
-
-    def get(self, url: str, **kwargs: Any) -> FakeResponse:
-        self.calls.append((url, kwargs))
-        item = self._responses.pop(0) if len(self._responses) > 1 else self._responses[0]
-        if isinstance(item, Exception):
-            raise item
-        return item
-
-
-class RecordingSleep:
-    """Хук сна, записывающий длительности пауз вместо реального ожидания."""
-
-    def __init__(self) -> None:
-        self.delays: list[float] = []
-
-    async def __call__(self, delay: float) -> None:
-        self.delays.append(delay)
-
-
-def _build_client(session: FakeSession, **overrides: Any) -> DeribitClient:
-    params: dict[str, Any] = {
-        "session": session,
-        "base_url": "https://example.test/api/v2",
-        "timeout": 5,
-        "sleep": RecordingSleep(),
-    }
-    params.update(overrides)
-    return DeribitClient(**params)
+def make(
+    *results: MagicMock | Exception,
+    max_retries: int = 3
+) -> tuple[DeribitClient, MagicMock, AsyncMock]:
+    """Клиент с мок-сессией и мок-сном; вернуть (client, session, sleep)."""
+    session = MagicMock()
+    session.get.side_effect = list(results)
+    sleep = AsyncMock()
+    client = DeribitClient(
+        session=session,
+        base_url="https://example.test/api/v2",
+        timeout=5,
+        max_retries=max_retries,
+        sleep=sleep,
+    )
+    return client, session, sleep
 
 
 async def test_get_index_price_returns_decimal() -> None:
-    session = FakeSession(FakeResponse({"result": {"index_price": 83417.55}}))
-    client = _build_client(session)
+    client, *_ = make(response({"result": {"index_price": 83417.55}}))
 
     price = await client.get_index_price("btc_usd")
 
@@ -85,85 +54,85 @@ async def test_get_index_price_returns_decimal() -> None:
 
 
 async def test_get_index_price_calls_correct_endpoint() -> None:
-    session = FakeSession(FakeResponse({"result": {"index_price": 1}}))
-    client = _build_client(session)
+    client, session, _ = make(response({"result": {"index_price": 1}}))
 
     await client.get_index_price("eth_usd")
 
-    url, kwargs = session.calls[0]
-    assert url == "https://example.test/api/v2/public/get_index_price"
+    args, kwargs = session.get.call_args.args, session.get.call_args.kwargs
+    assert args == ("https://example.test/api/v2/public/get_index_price",)
     assert kwargs["params"] == {"index_name": "eth_usd"}
 
 
 async def test_get_index_price_raises_on_error_payload_without_retry() -> None:
-    session = FakeSession(FakeResponse({"error": {"message": "bad ticker"}}))
-    client = _build_client(session)
+    client, session, _ = make(response({"error": {"message": "bad ticker"}}))
 
     with pytest.raises(DeribitError):
         await client.get_index_price("unknown")
 
-    assert len(session.calls) == 1
+    session.get.assert_called_once()
 
 
 async def test_get_index_price_raises_on_unexpected_payload() -> None:
-    session = FakeSession(FakeResponse({"result": {}}))
-    client = _build_client(session)
+    client, *_ = make(response({"result": {}}))
 
     with pytest.raises(DeribitError):
         await client.get_index_price("btc_usd")
 
 
 async def test_get_index_price_raises_not_found_without_retry() -> None:
-    session = FakeSession(FakeResponse(status=404))
-    client = _build_client(session)
+    client, session, _ = make(response(status=404))
 
     with pytest.raises(DeribitNotFoundError):
         await client.get_index_price("btc_usd")
 
-    assert len(session.calls) == 1
+    session.get.assert_called_once()
 
 
 async def test_get_index_price_raises_client_error_without_retry() -> None:
-    session = FakeSession(FakeResponse(status=400))
-    client = _build_client(session)
+    client, session, _ = make(response(status=400))
 
     with pytest.raises(DeribitClientError):
         await client.get_index_price("btc_usd")
 
-    assert len(session.calls) == 1
+    session.get.assert_called_once()
 
 
 async def test_get_index_price_retries_server_errors_then_raises() -> None:
-    session = FakeSession(FakeResponse(status=503))
-    client = _build_client(session, max_retries=2)
+    client, session, sleep = make(
+        response(status=503),
+        response(status=503),
+        response(status=503),
+        max_retries=2,
+    )
 
     with pytest.raises(DeribitServerError):
         await client.get_index_price("btc_usd")
 
-    assert len(session.calls) == 3
+    assert session.get.call_count == 3
+    assert sleep.await_count == 2
 
 
 async def test_get_index_price_recovers_after_transient_error() -> None:
-    session = FakeSession(
-        FakeResponse(status=503),
-        FakeResponse({"result": {"index_price": 42}}),
+    client, session, _ = make(
+        response(status=503),
+        response({"result": {"index_price": 42}}),
+        max_retries=2,
     )
-    client = _build_client(session, max_retries=2)
 
     price = await client.get_index_price("btc_usd")
 
     assert price == Decimal("42")
-    assert len(session.calls) == 2
+    assert session.get.call_count == 2
 
 
 async def test_get_index_price_retries_network_errors() -> None:
-    session = FakeSession(
+    client, session, _ = make(
         aiohttp.ClientConnectionError("boom"),
-        FakeResponse({"result": {"index_price": 7}}),
+        response({"result": {"index_price": 7}}),
+        max_retries=1,
     )
-    client = _build_client(session, max_retries=1)
 
     price = await client.get_index_price("btc_usd")
 
     assert price == Decimal("7")
-    assert len(session.calls) == 2
+    assert session.get.call_count == 2

@@ -7,7 +7,7 @@ from src.infrastructure.db.session import create_engine, create_session_factory,
 from src.infrastructure.deribit.client import DeribitClient
 
 
-async def fetch_and_store_prices(settings: Settings, tickers: list[str]) -> list[str]:
+async def fetch_and_store_prices(settings: Settings, tickers: list[str]) -> None:
     """Загрузить текущие индексные цены и сохранить их в одной транзакции."""
     engine = create_engine(settings.postgres.dsn)
     session_factory = create_session_factory(engine)

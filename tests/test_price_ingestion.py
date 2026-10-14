@@ -1,90 +1,56 @@
-"""Тесты сервиса загрузки цен на основе in-memory фейков."""
+"""Тесты сервиса загрузки цен на моках."""
 
 from decimal import Decimal
+from unittest.mock import AsyncMock, create_autospec
 
-from src.application.price_ingestion import PriceIngestionService
-from src.domain.entities import PriceTick
+import pytest
+
 from src.application.ports import PriceRepository
+from src.application.price_ingestion import PriceIngestionService
 
 
-class FakeRepository(PriceRepository):
-    """In-memory репозиторий для изоляции сервиса от базы данных."""
-
-    def __init__(self) -> None:
-        self.add_calls: list[list[PriceTick]] = []
-
-    async def add_many(self, ticks: list[PriceTick]) -> None:
-        self.add_calls.append(ticks)
-
-    async def get_all(
-        self, ticker: str, *, limit: int | None = None, offset: int = 0
-    ) -> list[PriceTick]:
-        return []
-
-    async def count(self, ticker: str) -> int:
-        return 0
-
-    async def get_latest(self, ticker: str) -> PriceTick | None:
-        return None
-
-    async def get_between(
-        self,
-        ticker: str,
-        *,
-        start: int | None = None,
-        end: int | None = None,
-        limit: int | None = None,
-        offset: int = 0,
-    ) -> list[PriceTick]:
-        return []
-
-    async def count_between(
-        self, ticker: str, *, start: int | None = None, end: int | None = None
-    ) -> int:
-        return 0
+@pytest.fixture
+def repository() -> PriceRepository:
+    """Репозиторий-двойник: реальная БД не нужна."""
+    return create_autospec(PriceRepository, instance=True)
 
 
-class FakeProvider:
-    """Детерминированный провайдер индексных цен."""
-
-    def __init__(self, prices: dict[str, Decimal]) -> None:
-        self._prices = prices
-        self.requested: list[str] = []
-
-    async def get_index_price(self, ticker: str) -> Decimal:
-        self.requested.append(ticker)
-        return self._prices[ticker]
+@pytest.fixture
+def service(repository: PriceRepository) -> PriceIngestionService:
+    """Сервис с провайдером, отвечающим по словарю цен."""
+    return PriceIngestionService(repository=repository, provider=AsyncMock())
 
 
-async def test_fetch_and_store_persists_all_tickers() -> None:
-    repository = FakeRepository()
-    provider = FakeProvider({"btc_usd": Decimal("100"), "eth_usd": Decimal("20")})
-    service = PriceIngestionService(repository=repository, provider=provider)
-
-    result = await service.fetch_and_store(["btc_usd", "eth_usd"])
-
-    assert result is None
-    assert provider.requested == ["btc_usd", "eth_usd"]
-    assert len(repository.add_calls) == 1
-    stored = repository.add_calls[0]
-    assert {tick.ticker for tick in stored} == {"btc_usd", "eth_usd"}
+def _provider_prices(**values: str) -> dict[str, Decimal]:
+    return {ticker: Decimal(value) for ticker, value in values.items()}
 
 
-async def test_fetch_and_store_uses_single_timestamp_for_batch() -> None:
-    repository = FakeRepository()
-    provider = FakeProvider({"btc_usd": Decimal("1"), "eth_usd": Decimal("2")})
-    service = PriceIngestionService(repository=repository, provider=provider)
+async def test_fetch_and_store_persists_all_tickers(repository, service) -> None:
+    service.provider.get_index_price.side_effect = _provider_prices(
+        btc_usd="100", eth_usd="20"
+    ).__getitem__
 
     await service.fetch_and_store(["btc_usd", "eth_usd"])
 
-    timestamps = {tick.timestamp for tick in repository.add_calls[0]}
-    assert len(timestamps) == 1
+    repository.add_many.assert_awaited_once()
+    stored = repository.add_many.await_args.args[0]
+    assert {tick.ticker for tick in stored} == {"btc_usd", "eth_usd"}
+    assert {tick.price for tick in stored} == {Decimal("100"), Decimal("20")}
 
 
-async def test_fetch_and_store_with_no_tickers_does_not_write() -> None:
-    repository = FakeRepository()
-    service = PriceIngestionService(repository=repository, provider=FakeProvider({}))
+async def test_fetch_and_store_uses_single_timestamp_for_batch(repository, service) -> None:
+    service.provider.get_index_price.side_effect = _provider_prices(
+        btc_usd="1", eth_usd="2"
+    ).__getitem__
 
+    await service.fetch_and_store(["btc_usd", "eth_usd"])
+
+    stored = repository.add_many.await_args.args[0]
+    assert len({tick.timestamp for tick in stored}) == 1
+
+
+async def test_fetch_and_store_with_no_tickers_does_not_read_prices(repository, service) -> None:
     await service.fetch_and_store([])
 
-    assert repository.add_calls == [[]]
+    repository.add_many.assert_awaited_once_with([])
+    service.provider.get_index_price.assert_not_awaited()
