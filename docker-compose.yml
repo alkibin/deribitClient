@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: derbit
-      POSTGRES_PASSWORD: derbit
-      POSTGRES_DB: derbit
+      POSTGRES_USER: ${POSTGRES__USER}
+      POSTGRES_PASSWORD: ${POSTGRES__PASSWORD}
+      POSTGRES_DB: ${POSTGRES__DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES__PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U derbit -d derbit"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES__USER} -d ${POSTGRES__DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -27,8 +27,14 @@ services:
 
   app:
     build: .
+    command: sh -c "alembic upgrade head && uvicorn src.interfaces.api.app_factory:create_app --factory --host 0.0.0.0 --port 8000"
+    env_file:
+      - .env
     environment:
-      - ".env"
+      POSTGRES__HOST: db
+      POSTGRES__PORT: 5432
+      CELERY__BROKER_URL: redis://redis:6379/0
+      CELERY__RESULT_BACKEND: redis://redis:6379/1
     ports:
       - "8000:8000"
     depends_on:
@@ -45,6 +51,13 @@ services:
   worker:
     build: .
     command: ["celery", "-A", "src.infrastructure.celery.tasks", "worker", "--loglevel=info"]
+    env_file:
+      - .env
+    environment:
+      POSTGRES__HOST: db
+      POSTGRES__PORT: 5432
+      CELERY__BROKER_URL: redis://redis:6379/0
+      CELERY__RESULT_BACKEND: redis://redis:6379/1
     depends_on:
       db:
         condition: service_healthy
@@ -56,6 +69,13 @@ services:
   beat:
     build: .
     command: ["celery", "-A", "src.infrastructure.celery.tasks", "beat", "--loglevel=info"]
+    env_file:
+      - .env
+    environment:
+      POSTGRES__HOST: db
+      POSTGRES__PORT: 5432
+      CELERY__BROKER_URL: redis://redis:6379/0
+      CELERY__RESULT_BACKEND: redis://redis:6379/1
     depends_on:
       db:
         condition: service_healthy
