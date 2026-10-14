@@ -18,16 +18,32 @@ class FakeRepository(PriceRepository):
     async def add_many(self, ticks: list[PriceTick]) -> None:
         self.add_calls.append(ticks)
 
-    async def get_all(self, ticker: str) -> list[PriceTick]:
+    async def get_all(
+        self, ticker: str, *, limit: int | None = None, offset: int = 0
+    ) -> list[PriceTick]:
         return []
+
+    async def count(self, ticker: str) -> int:
+        return 0
 
     async def get_latest(self, ticker: str) -> PriceTick | None:
         return None
 
     async def get_between(
-        self, ticker: str, start: int | None = None, end: int | None = None
+        self,
+        ticker: str,
+        *,
+        start: int | None = None,
+        end: int | None = None,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[PriceTick]:
         return []
+
+    async def count_between(
+        self, ticker: str, *, start: int | None = None, end: int | None = None
+    ) -> int:
+        return 0
 
 
 class FakeProvider:

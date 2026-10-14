@@ -64,3 +64,45 @@ async def test_get_between_filters_inclusive(
 
     filtered = await repository.get_between("btc_usd", start=2, end=4)
     assert [tick.timestamp for tick in filtered] == [2, 3, 4]
+
+
+async def test_get_all_paginates(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    session = session_factory()
+    repository = SqlAlchemyPriceRepository(session)
+    await repository.add_many(
+        [PriceTick(ticker="btc_usd", price=Decimal(i), timestamp=i) for i in range(1, 6)]
+    )
+    await session.commit()
+
+    page = await repository.get_all("btc_usd", limit=2, offset=1)
+    assert [tick.timestamp for tick in page] == [2, 3]
+
+
+async def test_count_returns_number_of_ticks(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    session = session_factory()
+    repository = SqlAlchemyPriceRepository(session)
+    await repository.add_many(
+        [PriceTick(ticker="btc_usd", price=Decimal(i), timestamp=i) for i in range(1, 6)]
+    )
+    await session.commit()
+
+    assert await repository.count("btc_usd") == 5
+    assert await repository.count("eth_usd") == 0
+
+
+async def test_count_between_counts_only_range(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    session = session_factory()
+    repository = SqlAlchemyPriceRepository(session)
+    await repository.add_many(
+        [PriceTick(ticker="btc_usd", price=Decimal(i), timestamp=i) for i in range(1, 6)]
+    )
+    await session.commit()
+
+    assert await repository.count_between("btc_usd", start=2, end=4) == 3
+    assert await repository.count_between("btc_usd") == 5
