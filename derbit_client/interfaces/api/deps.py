@@ -1,9 +1,9 @@
-"""FastAPI dependency providers.
+"""Провайдеры зависимостей FastAPI.
 
-All dependencies read their collaborators from ``app.state`` (populated by the
-application lifespan) so that no module-level mutable state is required. The API
-only needs read access, so it depends on the query service and never on the
-Deribit client.
+Все зависимости берут своих соавторов из ``app.state`` (заполняется в lifespan
+приложения), поэтому модульное изменяемое состояние не требуется. API нужен
+только доступ на чтение, поэтому он зависит от сервиса чтения и никогда — от
+клиента Deribit.
 """
 
 from __future__ import annotations
@@ -19,19 +19,19 @@ from derbit_client.infrastructure.db.repository import SqlAlchemyPriceRepository
 
 
 def get_settings(request: Request) -> Settings:
-    """Return the settings instance stored on the application state."""
+    """Вернуть экземпляр настроек, сохранённый в состоянии приложения."""
     return request.app.state.settings
 
 
 def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
-    """Return the session factory stored on the application state."""
+    """Вернуть фабрику сессий, сохранённую в состоянии приложения."""
     return request.app.state.session_factory
 
 
 async def get_repository(
     session_factory: async_sessionmaker[AsyncSession] = Depends(get_session_factory),
 ) -> AsyncIterator[SqlAlchemyPriceRepository]:
-    """Yield a repository bound to a per-request session."""
+    """Отдать репозиторий, привязанный к сессии текущего запроса."""
     async with session_factory() as session:
         yield SqlAlchemyPriceRepository(session)
 
@@ -39,5 +39,5 @@ async def get_repository(
 def get_query_service(
     repository: SqlAlchemyPriceRepository = Depends(get_repository),
 ) -> PriceQueryService:
-    """Assemble the read-only :class:`PriceQueryService` for the current request."""
-    return PriceQueryService(reader=repository)
+    """Собрать доступный только для чтения :class:`PriceQueryService` для запроса."""
+    return PriceQueryService(repository=repository)

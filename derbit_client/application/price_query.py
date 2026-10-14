@@ -1,31 +1,31 @@
-"""Application service serving read requests for stored index prices.
+"""Сервис application, обслуживающий запросы на чтение сохранённых цен.
 
-This is a read-only use case invoked by the HTTP interface. It depends solely
-on the :class:`PriceReader` repository contract and returns
-:class:`PriceTickDTO` objects to the presentation layer.
+Это use case только для чтения, который вызывается HTTP-интерфейсом. Он зависит
+исключительно от контракта репозитория :class:`PriceRepository` и возвращает
+объекты :class:`PriceTickDTO` слою представления.
 """
 
 from __future__ import annotations
 
 from derbit_client.application.dto import PriceTickDTO
 from derbit_client.domain.entities import PriceTick
-from derbit_client.domain.repositories import PriceReader
+from derbit_client.domain.repositories import PriceRepository
 
 
 class PriceQueryService:
-    """Reads stored index prices on behalf of API clients."""
+    """Читает сохранённые индексные цены по запросу API-клиентов."""
 
-    def __init__(self, reader: PriceReader) -> None:
-        self._reader = reader
+    def __init__(self, repository: PriceRepository) -> None:
+        self._repository = repository
 
     async def get_all_prices(self, ticker: str) -> list[PriceTickDTO]:
-        """Return every stored price for ``ticker``."""
-        ticks = await self._reader.get_all(ticker)
+        """Вернуть все сохранённые цены для ``ticker``."""
+        ticks = await self._repository.get_all(ticker)
         return [self._to_dto(tick) for tick in ticks]
 
     async def get_latest_price(self, ticker: str) -> PriceTickDTO | None:
-        """Return the most recent stored price for ``ticker``."""
-        tick = await self._reader.get_latest(ticker)
+        """Вернуть самую свежую сохранённую цену для ``ticker``."""
+        tick = await self._repository.get_latest(ticker)
         return self._to_dto(tick) if tick is not None else None
 
     async def get_prices_between(
@@ -34,10 +34,10 @@ class PriceQueryService:
         start: int | None = None,
         end: int | None = None,
     ) -> list[PriceTickDTO]:
-        """Return stored prices for ``ticker`` within an inclusive range."""
+        """Вернуть сохранённые цены для ``ticker`` в заданном диапазоне (включительно)."""
         if start is not None and end is not None and start > end:
             raise ValueError("'from' must be less than or equal to 'to'")
-        ticks = await self._reader.get_between(ticker, start, end)
+        ticks = await self._repository.get_between(ticker, start, end)
         return [self._to_dto(tick) for tick in ticks]
 
     @staticmethod

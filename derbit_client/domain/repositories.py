@@ -1,10 +1,8 @@
-"""Repository contracts for persisting and querying :class:`PriceTick` entities.
+"""Контракт репозитория для сохранения и чтения сущностей :class:`PriceTick`.
 
-The interfaces live in the domain layer and depend on nothing but the domain
-entity. They are segregated by intent (write vs read) so that an application
-service depends only on the operations it actually uses. Concrete
-implementations (e.g. SQLAlchemy) belong to infrastructure, which keeps the
-dependency direction pointing inwards.
+Интерфейс живёт в доменном слое и не зависит ни от чего, кроме доменной
+сущности. Конкретные реализации (например, SQLAlchemy) относятся к
+инфраструктуре, что сохраняет направление зависимостей внутрь.
 """
 
 from __future__ import annotations
@@ -14,24 +12,20 @@ from abc import ABC, abstractmethod
 from derbit_client.domain.entities import PriceTick
 
 
-class PriceWriter(ABC):
-    """Write-side persistence gateway for price ticks."""
+class PriceRepository(ABC):
+    """Абстрактный шлюз доступа к сохранённым ценовым тикам."""
 
     @abstractmethod
     async def add_many(self, ticks: list[PriceTick]) -> None:
-        """Persist a batch of price ticks in a single transaction."""
-
-
-class PriceReader(ABC):
-    """Read-side persistence gateway for price ticks."""
+        """Сохранить батч ценовых тиков в одной транзакции."""
 
     @abstractmethod
     async def get_all(self, ticker: str) -> list[PriceTick]:
-        """Return every stored tick for ``ticker`` ordered by time ascending."""
+        """Вернуть все сохранённые тики для ``ticker`` в порядке возрастания времени."""
 
     @abstractmethod
     async def get_latest(self, ticker: str) -> PriceTick | None:
-        """Return the most recent tick for ``ticker`` or ``None`` if absent."""
+        """Вернуть самый свежий тик для ``ticker`` или ``None``, если данных нет."""
 
     @abstractmethod
     async def get_between(
@@ -40,4 +34,4 @@ class PriceReader(ABC):
         start: int | None = None,
         end: int | None = None,
     ) -> list[PriceTick]:
-        """Return ticks for ``ticker`` within an inclusive UNIX timestamp range."""
+        """Вернуть тики для ``ticker`` в диапазоне UNIX timestamp (включительно)."""

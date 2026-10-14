@@ -1,4 +1,4 @@
-"""SQLAlchemy implementation of the price repository contracts."""
+"""Реализация контракта репозитория цен на SQLAlchemy."""
 
 from __future__ import annotations
 
@@ -6,12 +6,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from derbit_client.domain.entities import PriceTick
-from derbit_client.domain.repositories import PriceReader, PriceWriter
+from derbit_client.domain.repositories import PriceRepository
 from derbit_client.infrastructure.db.models import PriceTickModel
 
 
-class SqlAlchemyPriceRepository(PriceReader, PriceWriter):
-    """Persists and queries price ticks using an async SQLAlchemy session."""
+class SqlAlchemyPriceRepository(PriceRepository):
+    """Сохраняет и читает ценовые тики через асинхронную сессию SQLAlchemy."""
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session

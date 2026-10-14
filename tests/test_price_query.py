@@ -1,4 +1,4 @@
-"""Tests for the read-only price query service using an in-memory fake."""
+"""Тесты сервиса чтения цен на основе in-memory фейка."""
 
 from __future__ import annotations
 
@@ -8,14 +8,17 @@ import pytest
 
 from derbit_client.application.price_query import PriceQueryService
 from derbit_client.domain.entities import PriceTick
-from derbit_client.domain.repositories import PriceReader
+from derbit_client.domain.repositories import PriceRepository
 
 
-class FakeReader(PriceReader):
-    """In-memory read-side repository."""
+class FakeRepository(PriceRepository):
+    """In-memory репозиторий для изоляции сервиса от базы данных."""
 
     def __init__(self, ticks: list[PriceTick] | None = None) -> None:
         self.ticks: list[PriceTick] = list(ticks or [])
+
+    async def add_many(self, ticks: list[PriceTick]) -> None:
+        self.ticks.extend(ticks)
 
     async def get_all(self, ticker: str) -> list[PriceTick]:
         return sorted(
@@ -38,14 +41,14 @@ class FakeReader(PriceReader):
 
 
 async def test_get_all_prices_returns_stored_ticks() -> None:
-    reader = FakeReader(
+    repository = FakeRepository(
         [
             PriceTick(ticker="btc_usd", price=Decimal("1"), timestamp=1),
             PriceTick(ticker="btc_usd", price=Decimal("2"), timestamp=2),
             PriceTick(ticker="eth_usd", price=Decimal("3"), timestamp=3),
         ]
     )
-    service = PriceQueryService(reader=reader)
+    service = PriceQueryService(repository=repository)
 
     result = await service.get_all_prices("btc_usd")
 
@@ -53,21 +56,21 @@ async def test_get_all_prices_returns_stored_ticks() -> None:
 
 
 async def test_get_latest_price_returns_none_when_empty() -> None:
-    service = PriceQueryService(reader=FakeReader())
+    service = PriceQueryService(repository=FakeRepository())
     assert await service.get_latest_price("btc_usd") is None
 
 
 async def test_get_prices_between_validates_range() -> None:
-    service = PriceQueryService(reader=FakeReader())
+    service = PriceQueryService(repository=FakeRepository())
     with pytest.raises(ValueError):
         await service.get_prices_between("btc_usd", start=10, end=5)
 
 
 async def test_get_prices_between_filters() -> None:
-    reader = FakeReader(
+    repository = FakeRepository(
         [PriceTick(ticker="btc_usd", price=Decimal(i), timestamp=i) for i in range(1, 6)]
     )
-    service = PriceQueryService(reader=reader)
+    service = PriceQueryService(repository=repository)
 
     result = await service.get_prices_between("btc_usd", start=2, end=4)
 

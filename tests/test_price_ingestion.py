@@ -1,4 +1,4 @@
-"""Tests for the price ingestion service using in-memory fakes."""
+"""Тесты сервиса загрузки цен на основе in-memory фейков."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ from decimal import Decimal
 
 from derbit_client.application.price_ingestion import PriceIngestionService
 from derbit_client.domain.entities import PriceTick
-from derbit_client.domain.repositories import PriceWriter
+from derbit_client.domain.repositories import PriceRepository
 
 
-class FakeWriter(PriceWriter):
-    """In-memory write-side repository."""
+class FakeRepository(PriceRepository):
+    """In-memory репозиторий для изоляции сервиса от базы данных."""
 
     def __init__(self) -> None:
         self.add_calls: list[list[PriceTick]] = []
@@ -18,9 +18,20 @@ class FakeWriter(PriceWriter):
     async def add_many(self, ticks: list[PriceTick]) -> None:
         self.add_calls.append(ticks)
 
+    async def get_all(self, ticker: str) -> list[PriceTick]:
+        return []
+
+    async def get_latest(self, ticker: str) -> PriceTick | None:
+        return None
+
+    async def get_between(
+        self, ticker: str, start: int | None = None, end: int | None = None
+    ) -> list[PriceTick]:
+        return []
+
 
 class FakeProvider:
-    """Deterministic index price provider."""
+    """Детерминированный провайдер индексных цен."""
 
     def __init__(self, prices: dict[str, Decimal]) -> None:
         self._prices = prices
@@ -32,34 +43,34 @@ class FakeProvider:
 
 
 async def test_fetch_and_store_persists_all_tickers() -> None:
-    writer = FakeWriter()
+    repository = FakeRepository()
     provider = FakeProvider({"btc_usd": Decimal("100"), "eth_usd": Decimal("20")})
-    service = PriceIngestionService(writer=writer, provider=provider)
+    service = PriceIngestionService(repository=repository, provider=provider)
 
     result = await service.fetch_and_store(["btc_usd", "eth_usd"])
 
     assert result is None
     assert provider.requested == ["btc_usd", "eth_usd"]
-    assert len(writer.add_calls) == 1
-    stored = writer.add_calls[0]
+    assert len(repository.add_calls) == 1
+    stored = repository.add_calls[0]
     assert {tick.ticker for tick in stored} == {"btc_usd", "eth_usd"}
 
 
 async def test_fetch_and_store_uses_single_timestamp_for_batch() -> None:
-    writer = FakeWriter()
+    repository = FakeRepository()
     provider = FakeProvider({"btc_usd": Decimal("1"), "eth_usd": Decimal("2")})
-    service = PriceIngestionService(writer=writer, provider=provider)
+    service = PriceIngestionService(repository=repository, provider=provider)
 
     await service.fetch_and_store(["btc_usd", "eth_usd"])
 
-    timestamps = {tick.timestamp for tick in writer.add_calls[0]}
+    timestamps = {tick.timestamp for tick in repository.add_calls[0]}
     assert len(timestamps) == 1
 
 
 async def test_fetch_and_store_with_no_tickers_does_not_write() -> None:
-    writer = FakeWriter()
-    service = PriceIngestionService(writer=writer, provider=FakeProvider({}))
+    repository = FakeRepository()
+    service = PriceIngestionService(repository=repository, provider=FakeProvider({}))
 
     await service.fetch_and_store([])
 
-    assert writer.add_calls == [[]]
+    assert repository.add_calls == [[]]
