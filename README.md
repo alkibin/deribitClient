@@ -20,22 +20,31 @@
 ## Архитектура
 
 Проект построен по принципам **Clean Architecture** с направлением зависимостей
-строго внутрь:
+строго внутрь. Ответственности разделены по CQRS-подобному признаку: **запись**
+(сбор цен) выполняет воркер Celery, **чтение** (запросы клиентов) — FastAPI.
 
 ```
-interfaces (FastAPI)  ─┐
-infrastructure        ─┼──►  application  ──►  domain
- (DB, Deribit, Celery) │
+   read  ┌─────────────┐   write
+   ──────► PriceQuery  │   ┌─────────────── PriceIngestion ──┐
+         │  Service    │   │  Service                        │
+         └──────┬──────┘   └───────┬───────────────┬─────────┘
+                │                  │               │
+          PriceReader         PriceWriter   IndexPriceProvider (port)
+                │                  │               ▲
+                └──── SqlAlchemyPriceRepository     │
+                                    DeribitClient ───┘
+        application ──► domain        infrastructure ─┘
 ```
 
-- **domain** — чистые сущности (`PriceTick`) и абстрактный контракт
-  репозитория (`PriceRepository`). Не зависит ни от каких библиотек.
-- **application** — сервисы-сценарии (`PriceService`), зависят только от
-  абстракций домена и порта провайдера цен.
+- **domain** — чистые сущности (`PriceTick`) и сегрегированные контракты
+  репозитория (`PriceReader`, `PriceWriter`). Не зависит ни от каких библиотек.
+- **application** — сценарии и исходящие порты (`ports.IndexPriceProvider`):
+  `PriceIngestionService` (fetch + store) и `PriceQueryService` (чтение).
+  Зависит только от абстракций домена и собственных портов.
 - **infrastructure** — адаптеры: SQLAlchemy-репозиторий, aiohttp-клиент
-  Deribit, Celery, конфигурация.
+  Deribit, Celery, конфигурация. Реализует порты application/domain.
 - **interfaces** — HTTP-слой: роутеры, Pydantic-схемы, DI-провайдеры, фабрика
-  приложения.
+  приложения. Зависит только от `PriceQueryService`.
 
 ## Стек
 
@@ -58,25 +67,27 @@ infrastructure        ─┼──►  application  ──►  domain
 ```
 derbitClient/
 ├── derbit_client/
-│   ├── domain/               # сущности и интерфейсы репозитория
-│   │   ├── entities.py       # PriceTick
-│   │   └── repositories.py   # PriceRepository (ABC)
-│   ├── application/          # use cases
-│   │   ├── dto.py            # PriceTickDTO
-│   │   └── services.py       # PriceService
+│   ├── domain/                    # сущности и контракты репозитория
+│   │   ├── entities.py            # PriceTick
+│   │   └── repositories.py        # PriceReader + PriceWriter (ABC)
+│   ├── application/               # use cases и порты
+│   │   ├── dto.py                 # PriceTickDTO
+│   │   ├── ports.py               # IndexPriceProvider (Protocol)
+│   │   ├── price_ingestion.py     # PriceIngestionService (write)
+│   │   └── price_query.py         # PriceQueryService (read)
 │   ├── infrastructure/
-│   │   ├── config.py         # Settings (pydantic-settings)
-│   │   ├── deribit/client.py # DeribitClient (aiohttp) + IndexPriceProvider
-│   │   ├── db/               # base, models, session, repository, wait_for_db
-│   │   └── celery/           # app (фабрика), tasks (fetch_index_prices)
+│   │   ├── config.py              # Settings (pydantic-settings)
+│   │   ├── deribit/client.py      # DeribitClient (aiohttp)
+│   │   ├── db/                    # base, models, session, repository, wait_for_db
+│   │   └── celery/                # app (фабрика), tasks (fetch_index_prices)
 │   └── interfaces/
 │       └── api/
 │           ├── app_factory.py
 │           ├── deps.py
 │           ├── schemas.py
 │           └── routers/prices.py
-├── alembic/                  # миграции
-├── tests/                    # unit/integration тесты
+├── alembic/                       # миграции
+├── tests/                         # unit/integration тесты
 ├── docker/entrypoint.sh
 ├── docker-compose.yml
 ├── Dockerfile
@@ -186,8 +197,8 @@ uv run pytest
 uv run ruff check .
 ```
 
-Тесты не требуют внешней БД: сервис и API тестируются на фейках, репозиторий —
-на in-memory SQLite.
+Тесты не требуют внешней БД: сервисы ingestion/query, клиент Deribit и Celery
+тестируются на фейках, репозиторий — на in-memory SQLite.
 
 ## Конфигурация
 
@@ -215,9 +226,17 @@ uv run ruff check .
   interfaces`.** Домен не знает о фреймворках; зависимости направлены внутрь.
   Это позволяет тестировать бизнес-логику без БД и HTTP, а также менять
   адаптеры (СУБД, клиент биржи, брокер) без изменений в домене.
-- **Порт `IndexPriceProvider` (Protocol) вместо конкретного клиента.** Сервис
-  зависит от абстракции, поэтому в тестах подменяется фейком, а aiohttp-клиент
-  остаётся деталью инфраструктуры.
+- **Разделение записи и чтения.** Сбор цен (`PriceIngestionService`, вызывается
+  воркером Celery) и обслуживание клиентов (`PriceQueryService`, вызывается
+  FastAPI) — разные сервисы с разными зависимостями и причинами изменяться.
+  API-слой не знает о Deribit и не создаёт HTTP-клиент к бирже.
+- **Порт `IndexPriceProvider` объявлен в `application/ports.py`** и реализуется
+  инфраструктурой (`DeribitClient`). Порт принадлежит слою, который его
+  использует, поэтому `application` не импортирует `infrastructure` — вектор
+  зависимостей указывает строго внутрь.
+- **Сегрегация репозитория: `PriceReader` / `PriceWriter`.** Ingestion зависит
+  только от write-контракта, query — только от read-контракта (ISP/CQS).
+  Оба реализует единый `SqlAlchemyPriceRepository`.
 - **Инъекция зависимостей через конструкторы и FastAPI `Depends`.** Никаких
   глобальных переменных: конфигурация и адаптеры создаются в фабрике приложения
   и живут в `app.state`, освобождаются в `lifespan`.
@@ -228,7 +247,8 @@ uv run ruff check .
   (`btc_usd`, `eth_usd`) сохраняются с одинаковым `timestamp` — это даёт
   согласованный срез рынка.
 - **aiohttp для клиента, SQLAlchemy async + asyncpg для БД.** Стек полностью
-  асинхронный, что соответствует природе I/O-нагрузки.
+  асинхронный, что соответствует природе I/O-нагрузки. aiohttp используется
+  только в ingestion-пути (Celery), FastAPI его не требует.
 - **Celery worker выполняет async-код через `asyncio.run` внутри задачи.**
   Каждый запуск создаёт собственные engine, HTTP-сессию и scope транзакции,
   которые гарантированно освобождаются в `finally`.
