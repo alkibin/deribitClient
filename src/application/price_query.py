@@ -2,7 +2,7 @@
 
 from src.application.dto import Page, PriceTickDTO
 from src.domain.entities import PriceTick
-from src.domain.repositories import PriceRepository
+from src.application.ports import PriceRepository
 
 
 class PriceQueryService:

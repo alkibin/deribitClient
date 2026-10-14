@@ -2,9 +2,8 @@
 
 from datetime import UTC, datetime
 
-from src.application.ports import IndexPriceProvider
+from src.application.ports import IndexPriceProvider, PriceRepository
 from src.domain.entities import PriceTick
-from src.domain.repositories import PriceRepository
 
 
 class PriceIngestionService:

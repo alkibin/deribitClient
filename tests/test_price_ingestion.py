@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from src.application.price_ingestion import PriceIngestionService
 from src.domain.entities import PriceTick
-from src.domain.repositories import PriceRepository
+from src.application.ports import PriceRepository
 
 
 class FakeRepository(PriceRepository):
