@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 from decimal import Decimal
 from typing import Any
 
@@ -78,7 +77,6 @@ def _build_client(session: FakeSession, **overrides: Any) -> DeribitClient:
         "base_url": "https://example.test/api/v2",
         "timeout": 5,
         "sleep": RecordingSleep(),
-        "rng": random.Random(0),
     }
     params.update(overrides)
     return DeribitClient(**params)
@@ -190,18 +188,26 @@ async def test_get_index_price_retries_network_errors() -> None:
     assert len(session.calls) == 2
 
 
-def test_compute_delay_is_within_backoff_bounds() -> None:
-    client = _build_client(FakeSession(FakeResponse()), backoff_base=1.0, backoff_max=8.0)
+async def test_get_index_price_wraps_exhausted_network_error() -> None:
+    session = FakeSession(aiohttp.ClientConnectionError("boom"))
+    client = _build_client(session, max_retries=1)
 
-    assert 0.0 <= client._compute_delay(0) <= 1.0
-    assert 0.0 <= client._compute_delay(3) <= 8.0
+    with pytest.raises(DeribitError):
+        await client.get_index_price("btc_usd")
+
+    assert len(session.calls) == 2
 
 
-def test_compute_delay_prefers_retry_after() -> None:
-    client = _build_client(FakeSession(FakeResponse()))
-    error = DeribitRateLimitError("rate limited", retry_after=5.0)
+async def test_get_index_price_backs_off_between_retries() -> None:
+    sleep = RecordingSleep()
+    session = FakeSession(FakeResponse(status=503))
+    client = _build_client(session, max_retries=2, backoff_max=8.0, sleep=sleep)
 
-    assert client._compute_delay(0, error) == 5.0
+    with pytest.raises(DeribitServerError):
+        await client.get_index_price("btc_usd")
+
+    assert len(sleep.delays) == 2
+    assert all(0.0 <= delay <= 9.0 for delay in sleep.delays)
 
 
 def test_parse_retry_after_ignores_invalid_values() -> None:
