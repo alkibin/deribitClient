@@ -15,6 +15,7 @@ from fastapi import FastAPI
 
 from src.core.config import Settings, get_settings
 from src.infrastructure.db.session import create_engine, create_session_factory
+from src.interfaces.api.exceptions import register_exception_handlers
 from src.interfaces.api.routers import prices
 
 
@@ -39,6 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = settings or get_settings()
+    register_exception_handlers(app)
     app.include_router(prices.router)
 
     @app.get("/health", tags=["system"])
