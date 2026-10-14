@@ -1,18 +1,12 @@
 """Domain entity describing a single price observation."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from decimal import Decimal
 
 
 @dataclass(frozen=True, slots=True)
 class PriceTick:
-    """An immutable index price observation for a given ticker.
-
-    The ``timestamp`` is stored as a UNIX timestamp (seconds, UTC) because it
-    is timezone-agnostic, compact and easy to filter on at the database level.
-    """
+    """Модель данных для слоя бизнес-логики и репозитория."""
 
     ticker: str
     price: Decimal

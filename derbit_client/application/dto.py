@@ -1,7 +1,5 @@
 """Data transfer objects returned by application services."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from decimal import Decimal
 
