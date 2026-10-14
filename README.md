@@ -196,9 +196,9 @@ uv run ruff check .
 
 | Переменная                | По умолчанию                     | Описание                                  |
 | ------------------------- | -------------------------------- | ----------------------------------------- |
-| `DERBIT__TICKERS`         | `btc_usd,eth_usd`                | Список тикеров                            |
-| `DERBIT__BASE_URL`        | `https://www.deribit.com/api/v2` | Базовый URL Deribit API                   |
-| `DERBIT__TIMEOUT`         | `10`                             | Таймаут HTTP-запросов, сек                |
+| `DERIBIT__TICKERS`        | `btc_usd,eth_usd`                | Список тикеров                            |
+| `DERIBIT__BASE_URL`       | `https://www.deribit.com/api/v2` | Базовый URL Deribit API                   |
+| `DERIBIT__TIMEOUT`        | `10`                             | Таймаут HTTP-запросов, сек                |
 | `POSTGRES__HOST`          | `localhost`                      | Хост PostgreSQL                           |
 | `POSTGRES__PORT`          | `5432`                           | Порт PostgreSQL                           |
 | `POSTGRES__USER`          | `derbit`                         | Пользователь БД                           |

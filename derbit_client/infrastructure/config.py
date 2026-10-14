@@ -9,20 +9,30 @@ tests.
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Annotated
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
-class DeribitSettings(BaseSettings):
+class DeribitSettings(BaseModel):
     """Connection parameters for the Deribit API."""
 
     base_url: str = "https://www.deribit.com/api/v2"
     timeout: float = 10.0
-    tickers: list[str] = Field(default_factory=lambda: ["btc_usd", "eth_usd"])
+    # NoDecode keeps the raw env string so it can be parsed as a comma-separated
+    # list, matching .env / docker-compose (e.g. "btc_usd,eth_usd").
+    tickers: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["btc_usd", "eth_usd"])
+
+    @field_validator("tickers", mode="before")
+    @classmethod
+    def _split_tickers(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
 
 
-class PostgresSettings(BaseSettings):
+class PostgresSettings(BaseModel):
     """Connection parameters for PostgreSQL."""
 
     host: str = "localhost"
@@ -36,7 +46,7 @@ class PostgresSettings(BaseSettings):
         return f"{driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
 
 
-class CelerySettings(BaseSettings):
+class CelerySettings(BaseModel):
     """Celery broker, backend and schedule configuration."""
 
     broker_url: str = "redis://localhost:6379/0"

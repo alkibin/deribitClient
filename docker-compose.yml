@@ -6,7 +6,7 @@ x-app-environment: &app-environment
   POSTGRES__DB: derbit
   CELERY__BROKER_URL: redis://redis:6379/0
   CELERY__RESULT_BACKEND: redis://redis:6379/1
-  DERBIT__TICKERS: btc_usd,eth_usd
+  DERIBIT__TICKERS: btc_usd,eth_usd
   CELERY__FETCH_CRON: "* * * * *"
 
 services:
