@@ -1,15 +1,15 @@
 """Async Deribit client built on top of :mod:`aiohttp`.
 
 Only the public, unauthenticated ``public/get_index_price`` endpoint is used to
-read the index price of a currency (e.g. ``btc_usd``). The provider is defined
-as a Protocol so that application services can depend on an abstraction instead
-of the concrete HTTP client.
+read the index price of a currency (e.g. ``btc_usd``). :class:`DeribitClient`
+structurally implements the application port
+:class:`derbit_client.application.ports.IndexPriceProvider`.
 """
 
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any
 
 import aiohttp
 
@@ -18,16 +18,8 @@ class DeribitError(RuntimeError):
     """Raised when Deribit responds with an error payload."""
 
 
-class IndexPriceProvider(Protocol):
-    """Port describing how the application obtains an index price."""
-
-    async def get_index_price(self, ticker: str) -> Decimal:
-        """Return the current index price for ``ticker`` (e.g. ``btc_usd``)."""
-        ...
-
-
 class DeribitClient:
-    """Concrete :class:`IndexPriceProvider` speaking to the Deribit REST API."""
+    """Concrete ``IndexPriceProvider`` speaking to the Deribit REST API."""
 
     def __init__(self, session: aiohttp.ClientSession, base_url: str, timeout: float) -> None:
         self._session = session

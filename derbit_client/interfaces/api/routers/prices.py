@@ -3,13 +3,11 @@
 Every route is a ``GET`` and requires the ``ticker`` query parameter.
 """
 
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from derbit_client.application.dto import PriceTickDTO
-from derbit_client.application.services import PriceService
-from derbit_client.interfaces.api.deps import get_price_service
+from derbit_client.application.price_query import PriceQueryService
+from derbit_client.interfaces.api.deps import get_query_service
 from derbit_client.interfaces.api.schemas import PriceTickSchema
 
 router = APIRouter(prefix="/api/v1/prices", tags=["prices"])
@@ -20,7 +18,7 @@ TickerQuery = Query(..., min_length=1, description="Ticker, e.g. 'btc_usd' or 'e
 @router.get("", response_model=list[PriceTickSchema])
 async def get_all_prices(
     ticker: str = TickerQuery,
-    service: PriceService = Depends(get_price_service),
+    service: PriceQueryService = Depends(get_query_service),
 ) -> list[PriceTickDTO]:
     """Return every stored price for the requested ticker."""
     return await service.get_all_prices(ticker)
@@ -29,7 +27,7 @@ async def get_all_prices(
 @router.get("/latest", response_model=PriceTickSchema)
 async def get_latest_price(
     ticker: str = TickerQuery,
-    service: PriceService = Depends(get_price_service),
+    service: PriceQueryService = Depends(get_query_service),
 ) -> PriceTickDTO:
     """Return the most recent price for the requested ticker."""
     latest = await service.get_latest_price(ticker)
@@ -56,7 +54,7 @@ async def get_prices_by_date(
         ge=0,
         description="Inclusive upper bound as a UNIX timestamp (seconds).",
     ),
-    service: PriceService = Depends(get_price_service),
+    service: PriceQueryService = Depends(get_query_service),
 ) -> list[PriceTickDTO]:
     """Return prices for the requested ticker filtered by an inclusive date range."""
     try:

@@ -1,8 +1,9 @@
 """FastAPI application factory.
 
-The factory wires concrete infrastructure adapters (DB engine, HTTP session)
-into the application. Collaborators are stored on ``app.state`` and released by
-the lifespan context, keeping the module free of mutable globals.
+The factory wires concrete infrastructure adapters (the database engine) into
+the application. Collaborators are stored on ``app.state`` and released by the
+lifespan context, keeping the module free of mutable globals. The HTTP app is
+read-only and does not need any third-party API client.
 """
 
 from __future__ import annotations
@@ -10,7 +11,6 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-import aiohttp
 from fastapi import FastAPI
 
 from derbit_client.infrastructure.config import Settings, get_settings
@@ -25,11 +25,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     engine = create_engine(settings.postgres.dsn())
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
-    app.state.http_session = aiohttp.ClientSession()
     try:
         yield
     finally:
-        await app.state.http_session.close()
         await app.state.engine.dispose()
 
 

@@ -12,7 +12,7 @@ import asyncio
 
 import aiohttp
 
-from derbit_client.application.services import PriceService
+from derbit_client.application.price_ingestion import PriceIngestionService
 from derbit_client.infrastructure.celery.app import TASK_FETCH_PRICES, build_celery_app
 from derbit_client.infrastructure.config import Settings, get_settings
 from derbit_client.infrastructure.db.repository import SqlAlchemyPriceRepository
@@ -38,12 +38,12 @@ async def _fetch_and_store_prices(settings: Settings, tickers: list[str]) -> lis
                 timeout=settings.deribit.timeout,
             )
             async with session_scope(session_factory) as db_session:
-                service = PriceService(
-                    repository=SqlAlchemyPriceRepository(db_session),
+                service = PriceIngestionService(
+                    writer=SqlAlchemyPriceRepository(db_session),
                     provider=provider,
                 )
-                stored = await service.fetch_and_store(tickers)
-        return [tick.ticker for tick in stored]
+                await service.fetch_and_store(tickers)
+        return tickers
     finally:
         await engine.dispose()
 
