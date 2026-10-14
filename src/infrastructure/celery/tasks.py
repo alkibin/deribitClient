@@ -13,6 +13,4 @@ celery_app = build_celery_app(get_settings())
 def fetch_index_prices() -> list[str]:
     """Задача Celery: загрузить и сохранить индексные цены по всем настроенным тикерам."""
     settings = get_settings()
-    return asyncio.run(
-        fetch_and_store_prices(settings, settings.deribit.tickers)
-    )
+    return asyncio.run(fetch_and_store_prices(settings, settings.deribit.tickers))

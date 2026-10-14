@@ -3,7 +3,6 @@
 from functools import lru_cache
 from typing import Annotated
 
-from celery.worker.strategy import proto1_to_proto2
 from pydantic import Field
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
@@ -39,7 +38,6 @@ class CelerySettings(BaseSettings):
     result_backend: str = "redis://localhost:6379/1"
     timezone: str = "UTC"
     fetch_cron: str = "* * * * *"
-
 
 
 class Settings(BaseSettings):

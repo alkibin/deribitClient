@@ -21,9 +21,6 @@ def build_celery_app(settings: Settings) -> Celery:
         task_acks_late=True,
     )
     app.conf.beat_schedule = {
-        "fetch-index-prices": {
-            "task": TASK_FETCH_PRICES,
-            "schedule": settings.celery.fetch_cron
-        }
+        "fetch-index-prices": {"task": TASK_FETCH_PRICES, "schedule": settings.celery.fetch_cron}
     }
     return app
