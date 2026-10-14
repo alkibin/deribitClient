@@ -67,5 +67,5 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """Вернуть общепроцессный экземпляр настроек (кэшированная фабрика, не глобал)."""
+    """Вернуть общепроцессный экземпляр настроек."""
     return Settings()

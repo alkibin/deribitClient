@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
-    """Базовый класс декларативных моделей SQLAlchemy 2.0."""
+    """Базовый класс декларативных моделей SQLAlchemy."""
 
     id: Mapped[int] = mapped_column(
         primary_key=True,

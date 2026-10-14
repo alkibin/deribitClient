@@ -5,7 +5,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-DEFAULT_LIMIT = 100
+DEFAULT_LIMIT = 50
 MAX_LIMIT = 1000
 
 

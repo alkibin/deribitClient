@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from src.application.dto import PriceTickDTO
+from src.application.dto import PriceTickDTO, Page
 from src.application.price_query import PriceQueryService
 from src.interfaces.api import schemas
 from src.interfaces.api.di import get_query_service
@@ -16,15 +16,9 @@ router = APIRouter(prefix="/api/v1/prices", tags=["prices"])
 async def get_all_prices(
     query: Annotated[schemas.PriceListQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
-) -> schemas.PricePageSchema:
+) -> Page[PriceTickDTO]:
     """Вернуть страницу сохранённых цен для запрошенного тикера."""
-    page = await service.get_all_prices(query.ticker, limit=query.limit, offset=query.offset)
-    return schemas.PricePageSchema(
-        items=page.items,
-        total=page.total,
-        limit=page.limit,
-        offset=page.offset,
-    )
+    return await service.get_all_prices(query.ticker, limit=query.limit, offset=query.offset)
 
 
 @router.get("/latest", response_model=schemas.PriceTickSchema)
@@ -43,18 +37,12 @@ async def get_latest_price(
 async def get_prices_by_date(
     query: Annotated[schemas.PriceFilterQuery, Query()],
     service: PriceQueryService = Depends(get_query_service),
-) -> schemas.PricePageSchema:
+) -> Page[PriceTickDTO]:
     """Вернуть страницу цен тикера, отфильтрованных по диапазону (включительно)."""
-    page = await service.get_prices_between(
+    return await service.get_prices_between(
         query.ticker,
         start=query.date_from,
         end=query.date_to,
         limit=query.limit,
         offset=query.offset,
-    )
-    return schemas.PricePageSchema(
-        items=page.items,
-        total=page.total,
-        limit=page.limit,
-        offset=page.offset,
     )

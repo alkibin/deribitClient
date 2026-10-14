@@ -1,4 +1,4 @@
-"""Исходящие порты (абстракции, от которых зависит слой application)."""
+"""Исходящие порты от которых зависит слой application)."""
 
 from decimal import Decimal
 from typing import Protocol

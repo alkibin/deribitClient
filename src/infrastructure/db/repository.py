@@ -39,7 +39,9 @@ class SqlAlchemyPriceRepository(PriceRepository):
 
     async def count(self, ticker: str) -> int:
         stmt = (
-            select(func.count()).select_from(PriceTickModel).where(PriceTickModel.ticker == ticker)
+            select(func.count())
+            .select_from(PriceTickModel)
+            .where(PriceTickModel.ticker == ticker)
         )
         return await self.session.scalar(stmt) or 0
 
@@ -64,7 +66,7 @@ class SqlAlchemyPriceRepository(PriceRepository):
     ) -> list[PriceTick]:
         stmt = (
             select(PriceTickModel)
-            .where(*self._range_filters(ticker, start, end))
+            .where(*self._apply_range_filters(ticker, start, end))
             .order_by(PriceTickModel.timestamp.asc())
             .offset(offset)
         )
@@ -83,12 +85,12 @@ class SqlAlchemyPriceRepository(PriceRepository):
         stmt = (
             select(func.count())
             .select_from(PriceTickModel)
-            .where(*self._range_filters(ticker, start, end))
+            .where(*self._apply_range_filters(ticker, start, end))
         )
         return await self.session.scalar(stmt) or 0
 
     @staticmethod
-    def _range_filters(ticker: str, start: int | None, end: int | None) -> list:
+    def _apply_range_filters(ticker: str, start: int | None, end: int | None) -> list:
         filters = [PriceTickModel.ticker == ticker]
         if start is not None:
             filters.append(PriceTickModel.timestamp >= start)

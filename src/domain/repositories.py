@@ -20,7 +20,7 @@ class PriceRepository(ABC):
         limit: int | None = None,
         offset: int = 0,
     ) -> list[PriceTick]:
-        """Вернуть тики для тикера, начиная с ``offset`` и не более ``limit`` записей."""
+        """Вернуть тики для тикера, начиная с offset и не более limit записей."""
 
     @abstractmethod
     async def count(self, ticker: str) -> int:
@@ -40,7 +40,7 @@ class PriceRepository(ABC):
         limit: int | None = None,
         offset: int = 0,
     ) -> list[PriceTick]:
-        """Вернуть тики для тикера в диапазоне ``start``/``end`` с пагинацией."""
+        """Вернуть тики для тикера в диапазоне start - end с пагинацией."""
 
     @abstractmethod
     async def count_between(

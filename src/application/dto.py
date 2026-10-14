@@ -1,4 +1,4 @@
-"""Объекты передачи данных (DTO), возвращаемые сервисами уровня application."""
+"""Объекты передачи данных возвращаемые сервисами уровня application."""
 
 from dataclasses import dataclass
 from decimal import Decimal

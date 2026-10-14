@@ -21,9 +21,6 @@ from .exceptions import (
     DeribitClientError,
 )
 
-SleepFunction = Callable[[float], Awaitable[None]]
-
-
 _RETRYABLE_ERRORS = (
     DeribitRateLimitError,
     DeribitServerError,
@@ -33,7 +30,7 @@ _RETRYABLE_ERRORS = (
 
 
 class DeribitClient:
-    """Конкретная реализация ``IndexPriceProvider`` поверх REST API Deribit."""
+    """Конкретная реализация IndexPriceProvider поверх REST API Deribit."""
 
     def __init__(
         self,
@@ -42,7 +39,7 @@ class DeribitClient:
         timeout: float,
         *,
         max_retries: int = 3,
-        sleep: SleepFunction = asyncio.sleep,  # свой слип для тестов
+        sleep = asyncio.sleep,  # свой слип для тестов
     ) -> None:
         self._session = session
         self._base_url = base_url.rstrip("/")
@@ -69,7 +66,7 @@ class DeribitClient:
         params = {"index_name": ticker}
 
         async with self._session.get(url, params=params, timeout=self._timeout) as response:
-            self._raise_for_status_if_need(response)
+            self._raise_for_status(response)
             payload = await response.json()
 
         result = self._extract_result(payload)
@@ -85,7 +82,7 @@ class DeribitClient:
         return result
 
     @staticmethod
-    def _raise_for_status_if_need(response: aiohttp.ClientResponse) -> None:
+    def _raise_for_status(response: aiohttp.ClientResponse) -> None:
         status = response.status
         if status < 400:
             return
