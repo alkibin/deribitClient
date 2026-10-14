@@ -1,0 +1,86 @@
+x-app-environment: &app-environment
+  POSTGRES__HOST: db
+  POSTGRES__PORT: "5432"
+  POSTGRES__USER: derbit
+  POSTGRES__PASSWORD: derbit
+  POSTGRES__DB: derbit
+  CELERY__BROKER_URL: redis://redis:6379/0
+  CELERY__RESULT_BACKEND: redis://redis:6379/1
+  DERBIT__TICKERS: btc_usd,eth_usd
+  CELERY__FETCH_CRON: "* * * * *"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: derbit
+      POSTGRES_PASSWORD: derbit
+      POSTGRES_DB: derbit
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U derbit -d derbit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      <<: *app-environment
+      RUN_MIGRATIONS: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build: .
+    command: ["celery", "-A", "derbit_client.infrastructure.celery.tasks", "worker", "--loglevel=info"]
+    environment:
+      <<: *app-environment
+      RUN_MIGRATIONS: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+
+  beat:
+    build: .
+    command: ["celery", "-A", "derbit_client.infrastructure.celery.tasks", "beat", "--loglevel=info"]
+    environment:
+      <<: *app-environment
+      RUN_MIGRATIONS: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+
+volumes:
+  pgdata:
