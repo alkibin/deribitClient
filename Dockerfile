@@ -14,7 +14,7 @@ RUN apt-get update \
 RUN pip install --no-cache-dir uv
 
 COPY pyproject.toml README.md ./
-COPY src ./derbit_client
+COPY src ./src
 
 RUN uv pip install --system .
 

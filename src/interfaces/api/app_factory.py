@@ -1,10 +1,4 @@
-"""Фабрика приложения FastAPI.
-
-Фабрика связывает конкретные инфраструктурные адаптеры (движок базы) с
-приложением. Соавторы сохраняются в ``app.state`` и освобождаются в lifespan, что
-избавляет модуль от изменяемых глобальных переменных. HTTP-приложение работает
-только на чтение и не нуждается в клиенте стороннего API.
-"""
+"""Фабрика приложения FastAPI."""
 
 from __future__ import annotations
 
@@ -23,7 +17,7 @@ from src.interfaces.api.routers import prices
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Создать и освободить инфраструктурные ресурсы на время жизни приложения."""
     settings: Settings = app.state.settings
-    engine = create_engine(settings.postgres.dsn())
+    engine = create_engine(settings.postgres.dsn)
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
     try:

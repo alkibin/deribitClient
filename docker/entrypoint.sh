@@ -2,7 +2,7 @@
 set -eu
 
 if [ "${WAIT_FOR_DB:-true}" = "true" ]; then
-    python -m derbit_client.infrastructure.db.wait_for_db
+    python -m src.infrastructure.db.wait_for_db
 fi
 
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then

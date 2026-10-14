@@ -14,18 +14,18 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.pool import NullPool
 
 from alembic import context
-from derbit_client.core.config import get_settings
+from src.core.config import get_settings
 
 # Import models so their tables are registered on Base.metadata.
-from derbit_client.infrastructure.db import models  # noqa: F401
-from derbit_client.infrastructure.db.base import Base
+from src.infrastructure.db import models  # noqa: F401
+from src.infrastructure.db.base import Base
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", get_settings().postgres.dsn())
+config.set_main_option("sqlalchemy.url", get_settings().postgres.dsn)
 
 target_metadata = Base.metadata
 
