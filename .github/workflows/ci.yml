@@ -29,7 +29,7 @@ jobs:
         API__HOST: 127.0.0.1
         API__PORT: 8000
         # Если тестам нужна БД, можно указать тестовую строку (или поднять базу в Docker)
-        DATABASE_URL: sqlite+aiosqlite:///:memory:
+        DATABASE_URL: "sqlite+aiosqlite:///:memory:".
       run: |
         docker run --rm \
           -e API__HOST=$API__HOST \
