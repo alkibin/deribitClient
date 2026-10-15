@@ -22,5 +22,3 @@ COPY alembic.ini ./
 COPY alembic ./alembic
 
 EXPOSE 8000
-
-CMD ["uvicorn", "src.interfaces.api.app_factory:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

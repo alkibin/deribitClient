@@ -17,3 +17,5 @@ class PriceTick:
             raise ValueError("ticker must not be empty")
         if self.timestamp < 0:
             raise ValueError("timestamp must be a non-negative UNIX timestamp")
+        if self.price < 0:
+            raise ValueError("price must be a non-negative Decimal")

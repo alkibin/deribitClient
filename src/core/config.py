@@ -39,6 +39,12 @@ class CelerySettings(BaseSettings):
     timezone: str = "UTC"
     fetch_cron: str = "* * * * *"
 
+class ApisSettings(BaseSettings):
+    port: int = 8000
+    host: str = "localhost"
+    title: str = "Deribit Index Price API"
+    version: str = "0.1.0"
+
 
 class Settings(BaseSettings):
     """Корневая конфигурация, агрегирующая все вложенные группы настроек."""
@@ -46,6 +52,7 @@ class Settings(BaseSettings):
     deribit: DeribitSettings = Field(default_factory=DeribitSettings)
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     celery: CelerySettings = Field(default_factory=CelerySettings)
+    api: ApisSettings = Field(default_factory=ApisSettings)
 
     model_config = SettingsConfigDict(
         env_file=".env",

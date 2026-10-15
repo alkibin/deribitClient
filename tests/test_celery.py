@@ -2,7 +2,7 @@
 
 from celery.schedules import crontab
 
-from src.core.config import Settings
+from src.core.config import get_settings
 from src.infrastructure.celery.app import (
     TASK_FETCH_PRICES,
     build_celery_app,
@@ -10,7 +10,7 @@ from src.infrastructure.celery.app import (
 
 
 def test_build_celery_app_registers_beat_schedule() -> None:
-    settings = Settings()
+    settings = get_settings()
     app = build_celery_app(settings)
 
     entry = app.conf.beat_schedule["fetch-index-prices"]

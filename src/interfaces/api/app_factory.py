@@ -14,24 +14,23 @@ from src.interfaces.api.routers import prices
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Создать и освободить инфраструктурные ресурсы на время жизни приложения."""
-    settings: Settings = app.state.settings
+    settings = get_settings()
     engine = create_engine(settings.postgres.dsn)
-    app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
     try:
         yield
     finally:
-        await app.state.engine.dispose()
+        await engine.dispose()
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app() -> FastAPI:
     """Собрать настроенное приложение FastAPI."""
+    settings = get_settings()
     app = FastAPI(
-        title="Deribit Index Price API",
-        version="0.1.0",
+        title=settings.api.title,
+        version=settings.api.version,
         lifespan=lifespan,
     )
-    app.state.settings = settings or get_settings()
     register_exception_handlers(app)
     app.include_router(prices.router)
 
