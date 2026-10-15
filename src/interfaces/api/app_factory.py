@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from src.core.config import Settings, get_settings
+from src.core.config import get_settings
 from src.infrastructure.db.session import create_engine, create_session_factory
 from src.interfaces.api.exceptions import register_exception_handlers
 from src.interfaces.api.routers import prices

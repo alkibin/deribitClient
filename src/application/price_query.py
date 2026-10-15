@@ -1,8 +1,8 @@
 """Сервис application, обслуживающий запросы на чтение сохранённых цен."""
 
 from src.application.dto import Page, PriceTickDTO
-from src.domain.entities import PriceTick
 from src.application.ports import PriceRepository
+from src.domain.entities import PriceTick
 
 
 class PriceQueryService:

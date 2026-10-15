@@ -3,8 +3,8 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.domain.entities import PriceTick
 from src.application.ports import PriceRepository
+from src.domain.entities import PriceTick
 from src.infrastructure.db.models import PriceTickModel
 
 

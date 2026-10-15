@@ -2,38 +2,28 @@ name: CI Testing Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-    # 1. Клонируем репозиторий в окружение GitHub Actions
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # 2. Собираем Docker-образ
-    - name: Build Docker Image
-      run: |
-        docker build -t app-test:latest .
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
 
-    # 3. Запускаем контейнер и выполняем в нем тесты
-    # Передаем тестовые переменные окружения, если они нужны вашему приложению
-    - name: Run Tests inside Docker
-      env:
-        API__HOST: 127.0.0.1
-        API__PORT: 8000
-        # Если тестам нужна БД, можно указать тестовую строку (или поднять базу в Docker)
-        DATABASE_URL: "sqlite+aiosqlite:///:memory:".
-      run: |
-        docker run --rm \
-          -e API__HOST=$API__HOST \
-          -e API__PORT=$API__PORT \
-          -e DATABASE_URL=$DATABASE_URL \
-          my-app-test:latest \
-          pytest
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Run tests
+        run: uv run pytest -q
